@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Breadcrumb</title>
+        <link rel="stylesheet" href="popup.css">
+    </head>
+
+    <body>
+        <main>
+            <p class="eyebrow">BREADCRUMB</p>
+            <h1>Keep what matters.</h1>
+            <p class="description">
+                Save a useful piece of this page with a note for your future self.
+            </p>
+
+            <label for="note-input">Why is this useful?</label>
+
+            <textarea
+                id="note-input"
+                maxlength="240"
+                placeholder="For example: Useful explanation of how Chrome extensions store local data."
+            ></textarea>
+
+            <p id="note-count">0 / 240</p>
+
+            <button id="save-button">Save selected text</button>
+            <p id="status-message">Select text on a webpage, then open Breadcrumb.</p>
+
+            <section class="saved-section">
+                <div class="section-heading">
+                    <h2>Your trail</h2>
+                    <p id="capture-count">0 saved</p>
+                </div>
+
+                <input
+                    id="search-input"
+                    type="search"
+                    placeholder="Search saved breadcrumbs"
+                >
+
+                <p id="empty-message">Nothing saved yet. Your trail starts here.</p>
+
+                <div id="capture-list"></div>
+
+                <button id="clear-button" class="secondary-button">
+                    Clear saved breadcrumbs
+                </button>
+            </section>
+        </main>
+
+        <script src="popup.js"></script>
+    </body>
+</html>

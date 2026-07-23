@@ -1,0 +1,11 @@
+{
+    "manifest_version": 3,
+    "name": "Breadcrumb",
+    "version": "0.1.0",
+    "description": "Save useful webpage highlights with personal learning notes.",
+    "permissions": ["activeTab", "scripting", "storage"],
+    "action": {
+        "default_title": "Breadcrumb",
+        "default_popup": "popup.html"
+    }
+}

@@ -1,0 +1,196 @@
+body {
+    margin: 0;
+    width: 320px;
+    background: #f7f2e8;
+    color: #24342b;
+    font-family: Arial, sans-serif;
+}
+
+main {
+    padding: 24px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: #5d7a65;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.description {
+    line-height: 1.5;
+    margin: 14px 0 22px;
+}
+
+button {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    background: #355c45;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #274735;
+}
+
+#status-message {
+    min-height: 20px;
+    margin: 16px 0 0;
+    color: #5d665f;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.saved-section {
+    margin-top: 28px;
+    border-top: 1px solid #d8d1c4;
+    padding-top: 18px;
+}
+
+.section-heading {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+h2 {
+    font-size: 16px;
+    margin: 0;
+}
+
+#capture-count {
+    color: #5d665f;
+    font-size: 12px;
+    margin: 0;
+}
+
+#empty-message {
+    color: #5d665f;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+#capture-card {
+    background: #e8efe5;
+    border-radius: 10px;
+    margin: 14px 0;
+    padding: 14px;
+}
+
+blockquote {
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 0 0 12px;
+}
+
+#saved-source {
+    color: #355c45;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+#saved-date {
+    color: #5d665f;
+    font-size: 12px;
+    margin: 10px 0 0;
+}
+
+.secondary-button {
+    background: transparent;
+    border: 1px solid #b5beb1;
+    color: #355c45;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.secondary-button:hover {
+    background: #e8efe5;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+textarea {
+    box-sizing: border-box;
+    border: 1px solid #b5beb1;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    min-height: 86px;
+    padding: 11px;
+    resize: verical;
+    width: 100%;
+}
+
+textarea:focus {
+    border-color: #355c45;
+    outline: 2px solid #d5e3d2;
+}
+
+#note-count {
+    color: #5d665f;
+    font-size: 12px;
+    margin: 6px 0 18px;
+    text-align: right;
+}
+
+#saved-note {
+    color: #45534a;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0 0 12px;
+}
+
+#search-input {
+    box-sizing: border-box;
+    border: 1px solid #b5beb1;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    margin: 16px 0 8px;
+    padding: 10px;
+    width: 100%;
+}
+
+.capture-list {
+    display: grid;
+    gap: 12px;
+    margin: 14px 0;
+}
+
+.capture-card {
+    background: #e8efe5;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.capture-card blockquote {
+    font-size: 14px;
+    line-height: 1.45;
+    margin: 0 0 12px;
+}
+
+.capture-note {
+    color: #45534a;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0 0 12px;
+}
