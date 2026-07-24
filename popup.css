@@ -383,3 +383,23 @@ textarea:focus {
     line-height: 1.4;
     margin: 10px 0 0;
 }
+
+.backup-section {
+    border-top: 1px solid #cbd7c7;
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+.backup-section h3 {
+    font-size: 14px;
+    margin: 0;
+}
+
+.backup-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.backup-actions button {
+    width: auto;
+}

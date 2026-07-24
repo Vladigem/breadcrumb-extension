@@ -52,6 +52,31 @@
                 <p class="settings-help">
                     Breadcrumb checks your saved captures only on pages you open.
                 </p>
+
+                <div class="backup-section">
+                    <h3>Backup your trail</h3>
+
+                    <p class="settings-help">
+                        Export your saved breadcrumbs as a file, or restore an earlier backup.
+                    </p>
+
+                    <div  class="backup-actions">
+                        <button id="export-button" class="secondary-button">
+                            Export trail
+                        </button>
+
+                        <button id="import-button" class="secondary-button">
+                            Import trail
+                        </button>
+                    </div>
+
+                    <input
+                        id="import-input"
+                        type="file"
+                        accept="application/json"
+                        hidden
+                    >
+                </div>
             </section>
 
             <section id="edit-panel" class="edit-panel" hidden>

@@ -25,6 +25,8 @@ async function showRevisitReminder() {
         return;
     }
 
+    const latestCapture = matchingCaptures[0];
+
     const reminder = document.createElement("aside");
     reminder.id = reminderId;
 
@@ -36,10 +38,27 @@ async function showRevisitReminder() {
     message.className = "breadcrumb-reminder-message";
 
     if (matchingCaptures.length === 1) {
-        message.textContent = "You already saved 1 breadcrumb from this page.";
+        message.textContent = "You already saved a breadcrumb from this page.";
     } else {
         message.textContent =
-            `You already saved ${matchingCaptures.length} breadcrumbs from this page.`;
+            `You saved ${matchingCaptures.length} breadcrumbs from this page. Here is the latest:`;
+    }
+
+    const quote = document.createElement("blockquote");
+    quote.className = "breadcrumb-reminder-quote";
+    quote.textContent = `"${shortenText(latestCapture.text, 170)}"`;
+
+    const note = document.createElement("p");
+    note.className = "breadcrumb-reminder-note";
+    note.textContent = latestCapture.note || "";
+
+    const tags = document.createElement("div");
+    tags.className = "breadcrumb-reminder-tags";
+
+    for (const tag of latestCapture.tags || []) {
+        const tagLabel = document.createElement("span");
+        tagLabel.textContent = `#${tag}`;
+        tags.append(tagLabel);
     }
 
     const closeButton = document.createElement("button");
@@ -52,9 +71,28 @@ async function showRevisitReminder() {
 
     reminder.append(heading);
     reminder.append(message);
+    reminder.append(quote);
+
+    if (latestCapture.note) {
+        reminder.append(note);
+    }
+
+    if (latestCapture.tags && latestCapture.tags.length > 0) {
+        reminder.append(tags);
+    }
+
     reminder.append(closeButton);
 
     document.body.append(reminder);
+}
+
+
+function shortenText(text, maximumLength) {
+    if (text.length <= maximumLength) {
+        return text;
+    }
+
+    return `${text.slice(0, maximumLength)}...`;
 }
 
 
@@ -62,6 +100,7 @@ function getPageUrl(url) {
     const pageUrl = new URL(url);
 
     pageUrl.hash = "";
+
     return pageUrl.href;
 }
 

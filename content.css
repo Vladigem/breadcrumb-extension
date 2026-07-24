@@ -41,3 +41,35 @@
 .breadcrumb-reminder-close:hover {
     background: #274735;
 }
+
+.breadcrumb-reminder-quote {
+    border-left: 3px solid #8cab8a;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.45;
+    margin: 0 0 12px;
+    padding-left: 10px;
+}
+
+.breadcrumb-reminder-note {
+    color: #45534a;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0 0 12px;
+}
+
+.breadcrumb-reminder-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 0 0 14px;
+}
+
+.breadcrumb-reminder-tags span {
+    background: #dce8da;
+    border-radius: 999px;
+    color: #355c45;
+    font-size: 11px;
+    padding: 4px 7px;
+}

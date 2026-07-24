@@ -20,6 +20,9 @@ const remindersEnabled = document.querySelector("#reminders-enabled");
 const currentPageButton = document.querySelector("#current-page-button");
 const clearPageFilterButton = document.querySelector("#clear-page-filter-button");
 const pageFilterMessage = document.querySelector("#page-filter-message");
+const exportButton = document.querySelector("#export-button");
+const importButton = document.querySelector("#import-button");
+const importInput = document.querySelector("#import-input");
 
 let editingCaptureId = null;
 let currentPageFilterUrl = null;
@@ -54,6 +57,14 @@ remindersEnabled.addEventListener("change", async function () {
 currentPageButton.addEventListener("click", showCurrentPageCaptures);
 
 clearPageFilterButton.addEventListener("click", showAllCaptures);
+
+exportButton.addEventListener("click", exportCaptures);
+
+importButton.addEventListener("click", function () {
+    importInput.click();
+});
+
+importInput.addEventListener("change", importCaptures);
 
 saveButton.addEventListener("click", async function () {
     const tabs = await chrome.tabs.query({
@@ -390,6 +401,110 @@ async function saveEditedNote() {
 
     closeEditPanel();
     await renderCaptures();
+}
+
+
+async function exportCaptures() {
+    const storedData = await chrome.storage.local.get({
+        captures: []
+    });
+
+    if (storedData.captures.length === 0) {
+        statusMessage.textContent = "Save a breadcrumb before exporting."
+        return;
+    }
+
+    const backup = {
+        app: "Breadcrumb",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        captures: storedData.captures
+    };
+
+    const backupText = JSON.stringify(backup, null, 2);
+
+    const backupFile = new Blob([backupText], {
+        type: "application/json"
+    });
+
+    const backupUrl = URL.createObjectURL(backupFile);
+
+    await chrome.downloads.download({
+        url: backupUrl,
+        filename: "breadcrumb-backup.json",
+        saveAs: true
+    });
+
+    statusMessage.textContent = "Downloaded Breadcrumb backup.";
+}
+
+
+async function importCaptures(event) {
+    const selectedFile = event.target.files[0];
+
+    if(!selectedFile) {
+        return;
+    }
+
+    try{
+        const fileText = await selectedFile.text();
+        const backup = JSON.parse(fileText);
+
+        if (!Array.isArray(backup.captures)) {
+            throw new Error("Invalid backup");
+        }
+
+        const validCaptures = backup.captures.filter(isValidCapture);
+
+        const storedData = await chrome.storage.local.get({
+            captures: []
+        });
+
+        const existingIds = new Set(
+            storedData.captures.map(function (capture) {
+                return capture.id;
+            })
+        );
+
+        const newCaptures = validCaptures.filter(function (capture) {
+            return !existingIds.has(capture.id);
+        });
+
+        const combinedCaptures = [
+            ...storedData.captures,
+            ...newCaptures
+        ];
+
+        combinedCaptures.sort(function (firstCapture, secondCapture) {
+            return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
+        });
+
+        await chrome.storage.local.set({
+            captures: combinedCaptures
+        });
+
+        statusMessage.textContent =
+            `Imported ${newCaptures.length} new breadcrumbs.`;
+
+        await renderCaptures();
+    } catch (error) {
+        console.error(error);
+        statusMessage.textContent =
+            "That file is not a valid Breadcrumb backup.";
+    } finally {
+        importInput.value = "";
+    }
+}
+
+
+function isValidCapture(capture) {
+    return (
+        typeof capture.id === "string" &&
+        typeof capture.text === "string" &&
+        typeof capture.title === "string" &&
+        typeof capture.url === "string" &&
+        typeof capture.savedAt === "string"
+    );
 }
 
 
