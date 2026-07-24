@@ -24,8 +24,50 @@
 
             <p id="note-count">0 / 240</p>
 
+            <label for="tags-input">Tags</label>
+
+            <input
+                id="tags-input"
+                type="text"
+                placeholder="coding, school, idea"
+            >
+
+            <p class="input-help">Separate tags with commas.</p>
+
             <button id="save-button">Save selected text</button>
             <p id="status-message">Select text on a webpage, then open Breadcrumb.</p>
+
+            <section id="edit-panel" class="edit-panel" hidden>
+                <h2>Edit note</h2>
+
+                <textarea
+                    id="edit-note-input"
+                    maxlength="240"
+                    placeholder="Add a note for your future self."
+                ></textarea>
+
+                <p id="edit-note-count">0 / 240</p>
+
+                <label for="edit-tags-input">Tags</label>
+
+                <input
+                    id="edit-tags-input"
+                    type="text"
+                    placeholder="coding, school, idea"
+                >
+
+                <p class="input-help">Separate tags with commas.</p>
+
+                <div class="edit-actions">
+                    <button id="cancel-edit-button" class="secondary-button">
+                        Cancel
+                    </button>
+
+                    <button id="save-edit-button">
+                        Save changes
+                    </button>
+                </div>
+            </section>
 
             <section class="saved-section">
                 <div class="section-heading">
