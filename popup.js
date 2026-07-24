@@ -14,12 +14,19 @@ const cancelEditButton = document.querySelector("#cancel-edit-button");
 const saveEditButton = document.querySelector("#save-edit-button");
 const tagsInput = document.querySelector("#tags-input");
 const editTagsInput = document.querySelector("#edit-tags-input");
-
+const settingsButton = document.querySelector("#settings-button");
+const settingsPanel = document.querySelector("#settings-panel");
+const remindersEnabled = document.querySelector("#reminders-enabled");
+const currentPageButton = document.querySelector("#current-page-button");
+const clearPageFilterButton = document.querySelector("#clear-page-filter-button");
+const pageFilterMessage = document.querySelector("#page-filter-message");
 
 let editingCaptureId = null;
+let currentPageFilterUrl = null;
 
 
 noteInput.addEventListener("input", updateNoteCount);
+
 searchInput.addEventListener("input", renderCaptures);
 
 editNoteInput.addEventListener("input", updateEditNoteCount);
@@ -28,6 +35,25 @@ cancelEditButton.addEventListener("click", closeEditPanel);
 
 saveEditButton.addEventListener("click", saveEditedNote);
 
+settingsButton.addEventListener("click", function () {
+    settingsPanel.hidden = !settingsPanel.hidden;
+});
+
+remindersEnabled.addEventListener("change", async function () {
+    await chrome.storage.local.set({
+        remindersEnabled: remindersEnabled.checked
+    });
+
+    if (remindersEnabled.checked) {
+        statusMessage.textContent = "Revisit reminders turned on.";
+    } else {
+        statusMessage.textContent = "Revisit reminders turned off.";
+    }
+});
+
+currentPageButton.addEventListener("click", showCurrentPageCaptures);
+
+clearPageFilterButton.addEventListener("click", showAllCaptures);
 
 saveButton.addEventListener("click", async function () {
     const tabs = await chrome.tabs.query({
@@ -103,6 +129,49 @@ clearButton.addEventListener("click", async function () {
 });
 
 
+async function showCurrentPageCaptures() {
+    const tabs = await chrome.tabs.query({
+        active: true,
+        currentWindow: true
+    });
+
+    const currentTab = tabs[0];
+
+    const isWebPage =
+        currentTab.url.startsWith("http://") ||
+        currentTab.url.startsWith("https://");
+
+    if (!isWebPage) {
+        statusMessage.textContent =
+            "This filter works on normal webpages, not Chrome pages.";
+        return;
+    }
+
+    currentPageFilterUrl = getPageUrl(currentTab.url);
+
+    currentPageButton.hidden = true;
+    clearPageFilterButton.hidden = false;
+
+    pageFilterMessage.hidden = false;
+    pageFilterMessage.textContent =
+        "Showing only breadcrumbs saved from this page.";
+    
+    await renderCaptures();
+}
+
+
+async function showAllCaptures() {
+    currentPageFilterUrl = null;
+
+    currentPageButton.hidden = false;
+    clearPageFilterButton.hidden = true;
+
+    pageFilterMessage.hidden = true;
+
+    await renderCaptures();
+}
+
+
 async function renderCaptures() {
     const storedData = await chrome.storage.local.get({
         captures: []
@@ -122,17 +191,37 @@ async function renderCaptures() {
         return searchableText.includes(searchTerm);
     });
 
-    captureCount.textContent = `${captures.length} saved`;
+    const visibleCaptures = matchingCaptures.filter(function (capture) {
+        if (currentPageFilterUrl === null) {
+            return true;
+        }
+
+        return getPageUrl(capture.url) === currentPageFilterUrl;
+    });
+
+    if (currentPageFilterUrl === null) {
+        captureCount.textContent = `${captures.length} saved`;
+    } else {
+        captureCount.textContent = `${visibleCaptures.length} on this page`;
+    }
+
     captureList.innerHTML = "";
 
-    if (matchingCaptures.length === 0) {
+    if (visibleCaptures.length === 0) {
         emptyMessage.hidden = false;
 
         if (captures.length === 0) {
             emptyMessage.textContent =
                 "Nothing saved yet. Your trail starts here.";
+        } else if (currentPageFilterUrl !== null && searchTerm !== "") {
+            emptyMessage.textContent =
+                "No breadcrumbs from this page match that search.";
+        } else if (currentPageFilterUrl !== null) {
+            emptyMessage.textContent =
+                "No breadcrumbs have been saved from this page yet.";
         } else {
-            emptyMessage.textContent = "No saved breadcrumbs match that search."
+            emptyMessage.textContent =
+                "No saved breadcrumbs match that search.";
         }
 
         return;
@@ -140,7 +229,7 @@ async function renderCaptures() {
 
     emptyMessage.hidden = true;
 
-    for (const capture of matchingCaptures) {
+    for (const capture of visibleCaptures) {
         const card = createCaptureCard(capture);
         captureList.append(card);
     }
@@ -205,10 +294,10 @@ function createCaptureCard(capture) {
     footer.append(source);
     footer.append(actions);
 
-    const displayTime = capture.updateAt || capture.savedAt;
+    const displayTime = capture.updatedAt || capture.savedAt;
     const savedTime = new Date(displayTime);
 
-    const date = document.creatElement("p");
+    const date = document.createElement("p");
     date.className = "saved-date";
 
     if (capture.updatedAt) {
@@ -304,8 +393,26 @@ async function saveEditedNote() {
 }
 
 
+async function loadSettings() {
+    const storedData = await chrome.storage.local.get({
+        remindersEnabled: true
+    });
+
+    remindersEnabled.checked = storedData.remindersEnabled;
+}
+
+
 function updateEditNoteCount() {
     editNoteCount.textContent = `${editNoteInput.value.length} / 240`;
+}
+
+
+function getPageUrl(url) {
+    const pageUrl = new URL(url);
+
+    pageUrl.hash = "";
+
+    return pageUrl.href
 }
 
 
@@ -335,3 +442,4 @@ function getSelectedText() {
 updateNoteCount();
 updateEditNoteCount();
 renderCaptures();
+loadSettings();

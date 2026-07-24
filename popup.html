@@ -37,6 +37,23 @@
             <button id="save-button">Save selected text</button>
             <p id="status-message">Select text on a webpage, then open Breadcrumb.</p>
 
+            <button id="settings-button" class="settings-button">
+                Reminder settings
+            </button>
+
+            <section id="settings-panel" class="settings-panel" hidden>
+                <h2>Revisit reminders</h2>
+
+                <label class="toggle-label">
+                    <input id="reminders-enabled" type="checkbox">
+                    Show a reminder when I revisit a saved page
+                </label>
+
+                <p class="settings-help">
+                    Breadcrumb checks your saved captures only on pages you open.
+                </p>
+            </section>
+
             <section id="edit-panel" class="edit-panel" hidden>
                 <h2>Edit note</h2>
 
@@ -74,6 +91,18 @@
                     <h2>Your trail</h2>
                     <p id="capture-count">0 saved</p>
                 </div>
+
+                <div class="trail-controls">
+                    <button id="current-page-button" class="page-filter-button">
+                        Show this page
+                    </button>
+
+                    <button id="clear-page-filter-button" class="clear-filter-button" hidden>
+                        Show all
+                    </button>
+                </div>
+
+                <p id="page-filter-message" hidden></p>
 
                 <input
                     id="search-input"

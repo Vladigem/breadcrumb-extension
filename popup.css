@@ -134,7 +134,7 @@ textarea {
     line-height: 1.4;
     min-height: 86px;
     padding: 11px;
-    resize: verical;
+    resize: vertical;
     width: 100%;
 }
 
@@ -299,6 +299,87 @@ textarea:focus {
     width: auto;
 }
 
-.tag-button:hober {
+.tag-button:hover {
     background: #c7dbc5;
+}
+
+.settings-button {
+    background: transparent;
+    border: 1px solid #b5beb1;
+    color: #355c45;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.settings-button:hover {
+    background: #e8efe5;
+}
+
+.settings-panel {
+    background: #edf2ea;
+    border-radius: 10px;
+    margin-top: 12px;
+    padding: 16px;
+}
+
+.settings-panel h2 {
+    font-size: 16px;
+    margin: 0 0 12px;
+}
+
+.toggle-label {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    font-size: 13px;
+    gap: 9px;
+    line-height: 1.4;
+}
+
+.toggle-label input {
+    accent-color: #355c45;
+    height: 16px;
+    margin: 0;
+    width: 16px;
+}
+
+.settings-help {
+    color: #5d665f;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 12px 0 0;
+}
+
+.trail-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.page-filter-button,
+.clear-filter-button {
+    font-size: 12px;
+    padding: 8px 10px;
+    width: auto;
+}
+
+.page-filter-button {
+    background: #355c45;
+}
+
+.clear-filter-button {
+    background: transparent;
+    border: 1px solid #b5beb1;
+    color: #355c45;
+}
+
+.clear-filter-button:hover {
+    background: #e8efe5;
+}
+
+#page-filter-message {
+    color: #5d665f;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 10px 0 0;
 }
