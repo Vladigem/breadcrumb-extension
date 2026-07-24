@@ -23,9 +23,15 @@ const pageFilterMessage = document.querySelector("#page-filter-message");
 const exportButton = document.querySelector("#export-button");
 const importButton = document.querySelector("#import-button");
 const importInput = document.querySelector("#import-input");
+const tagBrowser = document.querySelector("#tag-browser");
+const tagList = document.querySelector("#tag-list");
+const clearTagButton = document.querySelector("#clear-tag-button");
+const favouritesButton = document.querySelector("#favourites-button");
 
 let editingCaptureId = null;
 let currentPageFilterUrl = null;
+let selectedTag = null;
+let showFavouritesOnly = false;
 
 
 noteInput.addEventListener("input", updateNoteCount);
@@ -66,6 +72,10 @@ importButton.addEventListener("click", function () {
 
 importInput.addEventListener("change", importCaptures);
 
+clearTagButton.addEventListener("click", clearTagFilter);
+
+favouritesButton.addEventListener("click", toggleFavouriteFilter);
+
 saveButton.addEventListener("click", async function () {
     const tabs = await chrome.tabs.query({
         active: true,
@@ -99,6 +109,7 @@ saveButton.addEventListener("click", async function () {
 
         const capture = {
             id: crypto.randomUUID(),
+            favourite: false,
             text: selectedText,
             note: noteInput.value.trim(),
             tags: getTags(tagsInput.value),
@@ -183,12 +194,125 @@ async function showAllCaptures() {
 }
 
 
+async function filterByTag(tag) {
+    selectedTag = tag;
+
+    searchInput.value = "";
+    clearTagButton.hidden = false;
+    
+    await renderCaptures();
+}
+
+
+async function clearTagFilter() {
+    selectedTag = null;
+    
+    clearTagButton.hidden = true;
+
+    await renderCaptures();
+}
+
+
+function renderTagBrowser(captures) {
+    const tagCounts = new Map();
+
+    for (const capture of captures) {
+        for (const tag of capture.tags || []) {
+            const currentCount = tagCounts.get(tag) || 0;
+
+            tagCounts.set(tag, currentCount + 1);
+        }
+    }
+
+    if (tagCounts.size === 0) {
+        tagBrowser.hidden = true;
+        return;
+    }
+
+    tagBrowser.hidden = false;
+    tagList.innerHTML = "";
+
+    const sortedTags = [...tagCounts.entries()].sort(function (firstEntry, secondEntry) {
+        return firstEntry[0].localeCompare(secondEntry[0]);
+    });
+
+    for (const entry of sortedTags) {
+        const tag = entry[0];
+        const count = entry[1];
+
+        const tagButton = document.createElement("button");
+        tagButton.className = "tag-browser-button";
+        tagButton.textContent = `#${tag} (${count})`;
+
+        if (tag === selectedTag) {
+            tagButton.classList.add("active-tag");
+        }
+
+        tagButton.addEventListener("click", function () {
+            filterByTag(tag);
+        });
+
+        tagList.append(tagButton);
+    }
+}
+
+
+async function toggleFavouriteFilter() {
+    showFavouritesOnly = !showFavouritesOnly;
+
+    if (showFavouritesOnly) {
+        favouritesButton.textContent = "Show all captures";
+        favouritesButton.classList.add("active-favourites");
+    } else {
+        favouritesButton.textContent = "Show favourites";
+        favouritesButton.classList.remove("active-favourites");
+    }
+
+    await renderCaptures();
+}
+
+
+async function toggleFavourite(captureId) {
+    const storedData = await chrome.storage.local.get({
+        captures: []
+    });
+
+    const captureToUpdate = storedData.captures.find(function (capture) {
+        return capture.id === captureId;
+    });
+
+    const updatedCaptures = storedData.captures.map(function (capture) {
+        if (capture.id === captureId) {
+            return {
+                ...capture,
+                favourite: !capture.favourite
+            };
+        }
+
+        return capture;
+    });
+
+    await chrome.storage.local.set({
+        captures: updatedCaptures
+    });
+
+    if (captureToUpdate.favourite) {
+        statusMessage.textContent = "Removed from favourites.";
+    } else {
+        statusMessage.textContent = "Added to favourites.";
+    }
+
+    await renderCaptures();
+}
+
+
 async function renderCaptures() {
     const storedData = await chrome.storage.local.get({
         captures: []
     });
 
     const captures = storedData.captures;
+    renderTagBrowser(captures);
     const searchTerm = searchInput.value.trim().toLowerCase();
 
     const matchingCaptures = captures.filter(function (capture) {
@@ -202,7 +326,23 @@ async function renderCaptures() {
         return searchableText.includes(searchTerm);
     });
 
-    const visibleCaptures = matchingCaptures.filter(function (capture) {
+    const tagFilteredCaptures = matchingCaptures.filter(function (capture) {
+        if (selectedTag === null) {
+            return true;
+        }
+
+        return (capture.tags || []).includes(selectedTag);
+    });
+
+    const favouriteCaptures = tagFilteredCaptures.filter(function (capture) {
+        if (!showFavouritesOnly) {
+            return true;
+        }
+
+        return capture.favourite === true;
+    });
+
+    const visibleCaptures = favouriteCaptures.filter(function (capture) {
         if (currentPageFilterUrl === null) {
             return true;
         }
@@ -210,10 +350,12 @@ async function renderCaptures() {
         return getPageUrl(capture.url) === currentPageFilterUrl;
     });
 
-    if (currentPageFilterUrl === null) {
-        captureCount.textContent = `${captures.length} saved`;
-    } else {
+    if (currentPageFilterUrl !== null) {
         captureCount.textContent = `${visibleCaptures.length} on this page`;
+    } else if (showFavouritesOnly) {
+        captureCount.textContent = `${visibleCaptures.length} favourites`;
+    } else {
+        captureCount.textContent = `${captures.length} saved`;
     }
 
     captureList.innerHTML = "";
@@ -230,6 +372,9 @@ async function renderCaptures() {
         } else if (currentPageFilterUrl !== null) {
             emptyMessage.textContent =
                 "No breadcrumbs have been saved from this page yet.";
+        } else if (showFavouritesOnly) {
+            emptyMessage.textContent =
+                "No favourite breadcrumbs match your current filters."
         } else {
             emptyMessage.textContent =
                 "No saved breadcrumbs match that search.";
@@ -267,8 +412,7 @@ function createCaptureCard(capture) {
         tagButton.textContent = `#${tag}`;
 
         tagButton.addEventListener("click", function () {
-            searchInput.value = tag;
-            renderCaptures();
+            filterByTag(tag);
         });
 
         tags.append(tagButton);
@@ -278,6 +422,28 @@ function createCaptureCard(capture) {
     source.href = capture.url;
     source.target = "_blank";
     source.textContent = capture.title;
+
+    const favouriteButton = document.createElement("button");
+    favouriteButton.className = "favourite-button";
+
+    if (capture.favourite) {
+        favouriteButton.classList.add("is-favourite");
+        favouriteButton.textContent = "\u2605";
+        favouriteButton.setAttribute(
+            "aria-label",
+            "Remove breadcrumb from favourites"
+        );
+    } else {
+        favouriteButton.textContent = "\u2606";
+        favouriteButton.setAttribute(
+            "aria-label",
+            "Add breadcrumb to favourites"
+        );
+    }
+
+    favouriteButton.addEventListener("click", async function () {
+        await toggleFavourite(capture.id);
+    });
 
     const editButton = document.createElement("button");
     editButton.className = "edit-button";
@@ -297,6 +463,7 @@ function createCaptureCard(capture) {
 
     const actions = document.createElement("div");
     actions.className = "capture-actions";
+    actions.append(favouriteButton);
     actions.append(editButton);
     actions.append(deleteButton);
 

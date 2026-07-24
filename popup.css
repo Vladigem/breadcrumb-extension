@@ -403,3 +403,87 @@ textarea:focus {
 .backup-actions button {
     width: auto;
 }
+
+.tag-browser {
+    border-bottom: 1px solid #d8d1c4;
+    margin-top: 16px;
+    padding-bottom: 16px;
+}
+
+.tag-browser-heading {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.tag-browser h3 {
+    font-size: 13px;
+    margin: 0;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.tag-browser-button {
+    background: #dce8da;
+    border: none;
+    border-radius: 999px;
+    color: #355c45;
+    font-size: 12px;
+    padding: 6px 9px;
+    width: auto;
+}
+
+.tag-browser-button:hover,
+.tag-browser-button.active-tag {
+    background: #355c45;
+    color: white;
+}
+
+.clear-tag-button {
+    background: transparent;
+    border: none;
+    color: #5d7a65;
+    font-size: 12px;
+    padding: 4px;
+    width: auto;
+}
+
+.clear-tag-button:hover {
+    background: transparent;
+    color: #24342b;
+    text-decoration: underline;
+}
+
+.favourites-button {
+    background: transparent;
+    border: 1px solid #b5beb1;
+    color: #355c45;
+    font-size: 12px;
+    padding: 8px 10px;
+    width: auto;
+}
+
+.favourites-button:hover,
+.favourites-button.active-favourites {
+    background: #355c45;
+    color: white;
+}
+
+.favourite-button {
+    background: transparent;
+    border: 1px solid #d6bd70;
+    color: #9a7610;
+    font-size: 15px;
+    line-height: 1;
+    padding: 5px 8px;
+    width: auto;
+}
+
+.favourite-button.is-favourite {
+    background: #fff1b8;
+}
