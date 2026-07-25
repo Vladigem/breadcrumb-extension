@@ -27,11 +27,18 @@ const tagBrowser = document.querySelector("#tag-browser");
 const tagList = document.querySelector("#tag-list");
 const clearTagButton = document.querySelector("#clear-tag-button");
 const favouritesButton = document.querySelector("#favourites-button");
+const totalCaptures = document.querySelector("#total-captures");
+const totalPages = document.querySelector("#total-pages");
+const totalFavourites = document.querySelector("#total-favourites");
+const sortSelect = document.querySelector("#sort-select");
+const timelineButton = document.querySelector("#timeline-button");
+const sortControl = document.querySelector("#sort-control");
 
 let editingCaptureId = null;
 let currentPageFilterUrl = null;
 let selectedTag = null;
 let showFavouritesOnly = false;
+let timelineMode = false;
 
 
 noteInput.addEventListener("input", updateNoteCount);
@@ -75,6 +82,10 @@ importInput.addEventListener("change", importCaptures);
 clearTagButton.addEventListener("click", clearTagFilter);
 
 favouritesButton.addEventListener("click", toggleFavouriteFilter);
+
+sortSelect.addEventListener("change", renderCaptures);
+
+timelineButton.addEventListener("click", toggleTimelineMode);
 
 saveButton.addEventListener("click", async function () {
     const tabs = await chrome.tabs.query({
@@ -306,6 +317,130 @@ async function toggleFavourite(captureId) {
 }
 
 
+function renderTrailSummary(captures) {
+    const savedPages = new Set(
+        captures.map(function (capture) {
+            return getPageUrl(capture.url);
+        })
+    );
+
+    const favouriteCount = captures.filter(function (capture) {
+        return capture.favourite === true;
+    }).length;
+
+    totalCaptures.textContent = captures.length;
+    totalPages.textContent = savedPages.size;
+    totalFavourites.textContent = favouriteCount;
+}
+
+
+function sortCaptures(captures) {
+    const sortedCaptures = [...captures];
+
+    if (sortSelect.value === "oldest") {
+        sortedCaptures.sort(function (firstCapture, secondCapture) {
+            return new Date(firstCapture.savedAt) - new Date(secondCapture.savedAt);
+        });
+    } else if (sortSelect.value === "favourites") {
+        sortedCaptures.sort(function (firstCapture, secondCapture) {
+            const favouriteDifference =
+                Number(secondCapture.favourite) - Number(firstCapture.favourite);
+
+            if (favouriteDifference !== 0) {
+                return favouriteDifference;
+            }
+
+            return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
+        });
+    } else {
+        sortedCaptures.sort(function (firstCapture, secondCapture) {
+            return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
+        });
+    }
+
+    return sortedCaptures;
+}
+
+
+async function toggleTimelineMode() {
+    timelineMode = !timelineMode;
+
+    if (timelineMode) {
+        timelineButton.textContent = "Card view";
+        timelineButton.classList.add("active-timeline");
+        sortControl.hidden = true;
+    } else {
+        timelineButton.textContent = "Timeline view";
+        timelineButton.classList.remove("active-timeline");
+        sortControl.hidden = false;
+    }
+
+    await renderCaptures();
+}
+
+
+function renderTimeline(captures) {
+    const timelineCaptures = [...captures].sort(function (
+        firstCapture,
+        secondCapture
+    ) {
+        return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
+    });
+
+    const capturesByDate = new Map();
+
+    for (const capture of timelineCaptures) {
+        const savedDate = new Date(capture.savedAt);
+        const dateKey = savedDate.toDateString();
+
+        if (!capturesByDate.has(dateKey)) {
+            capturesByDate.set(dateKey, []);
+        }
+
+        capturesByDate.get(dateKey).push(capture);
+    }
+
+    for (const entry of capturesByDate) {
+        const dateKey = entry[0];
+        const dailyCaptures = entry[1];
+
+        const group = document.createElement("section");
+        group.className = "timeline-group";
+
+        const dateHeading = document.createElement("p");
+        dateHeading.className = "timeline-date";
+        dateHeading.textContent = formatTimelineDate(dateKey);
+
+        const items = document.createElement("div");
+        items.className = "timeline-items";
+
+        for (const capture of dailyCaptures) {
+            const item = document.createElement("div");
+            item.className = "timeline-item";
+
+            item.append(createCaptureCard(capture));
+            items.append(item);
+        }
+
+        group.append(dateHeading);
+        group.append(items);
+
+        captureList.append(group);
+    }
+}
+
+
+function formatTimelineDate(dateText) {
+    const date = new Date(dateText);
+
+    return date.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric"
+    });
+}
+
+
 async function renderCaptures() {
     const storedData = await chrome.storage.local.get({
         captures: []
@@ -313,6 +448,7 @@ async function renderCaptures() {
 
     const captures = storedData.captures;
     renderTagBrowser(captures);
+    renderTrailSummary(captures);
     const searchTerm = searchInput.value.trim().toLowerCase();
 
     const matchingCaptures = captures.filter(function (capture) {
@@ -350,17 +486,19 @@ async function renderCaptures() {
         return getPageUrl(capture.url) === currentPageFilterUrl;
     });
 
+    const sortedCaptures = sortCaptures(visibleCaptures);
+
     if (currentPageFilterUrl !== null) {
-        captureCount.textContent = `${visibleCaptures.length} on this page`;
+        captureCount.textContent = `${sortedCaptures.length} on this page`;
     } else if (showFavouritesOnly) {
-        captureCount.textContent = `${visibleCaptures.length} favourites`;
+        captureCount.textContent = `${sortedCaptures.length} favourites`;
     } else {
         captureCount.textContent = `${captures.length} saved`;
     }
 
     captureList.innerHTML = "";
 
-    if (visibleCaptures.length === 0) {
+    if (sortedCaptures.length === 0) {
         emptyMessage.hidden = false;
 
         if (captures.length === 0) {
@@ -385,9 +523,13 @@ async function renderCaptures() {
 
     emptyMessage.hidden = true;
 
-    for (const capture of visibleCaptures) {
-        const card = createCaptureCard(capture);
-        captureList.append(card);
+    if (timelineMode) {
+        renderTimeline(sortedCaptures);
+    } else {
+        for (const capture of sortedCaptures) {
+            const card = createCaptureCard(capture);
+            captureList.append(card);
+        }
     }
 }
 

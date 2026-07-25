@@ -352,6 +352,7 @@ textarea:focus {
 
 .trail-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 14px;
 }
@@ -486,4 +487,103 @@ textarea:focus {
 
 .favourite-button.is-favourite {
     background: #fff1b8;
+}
+
+.trail-summary {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    margin: 16px 0;
+}
+
+.summary-item {
+    background: #edf2ea;
+    border-radius: 8px;
+    padding: 10px 6px;
+    text-align: center;
+}
+
+.summary-item strong {
+    display: block;
+    font-size: 18px;
+}
+
+.summary-item span {
+    color: #5d665f;
+    font-size: 11px;
+}
+
+.sort-control {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.sort-control label {
+    font-size: 12px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+#sort-select {
+    background: white;
+    border: 1px solid #b5beb1;
+    border-radius: 7px;
+    color: #24342b;
+    flex: 1;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    padding: 8px;
+}
+
+.timeline-button {
+    background: transparent;
+    border: 1px solid #b5beb1;
+    color: #355c45;
+    font-size: 12px;
+    padding: 8px 10px;
+    width: auto;
+}
+
+.timeline-button.active-timeline {
+    background: #355c45;
+    color: white;
+}
+
+.timeline-group {
+    margin: 18px 0;
+}
+
+.timeline-date {
+    color: #5d7a65;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.7px;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+}
+
+.timeline-items {
+    border-left: 2px solid #b7cbb4;
+    display: grid;
+    gap: 12px;
+    margin-left: 7px;
+    padding-left: 18px;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item:before {
+    background: #355c45;
+    border: 3px solid #f7f2e8;
+    border-radius: 50%;
+    content: "";
+    height: 10px;
+    left: -25px;
+    position: absolute;
+    top: 18px;
+    width: 10px;
 }

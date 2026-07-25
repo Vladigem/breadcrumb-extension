@@ -117,6 +117,33 @@
                     <p id="capture-count">0 saved</p>
                 </div>
 
+                <div class="trail-summary">
+                    <div class="summary-item">
+                        <strong id="total-captures">0</strong>
+                        <span>captures</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <strong id="total-pages">0</strong>
+                        <span>pages</span>
+                    </div>
+
+                    <div class="summary-item">
+                        <strong id="total-favourites">0</strong>
+                        <span>favourites</span>
+                    </div>
+                </div>
+
+                <div id="sort-control" class="sort-control">
+                    <label for="sort-select">Sort trail</label>
+
+                    <select id="sort-select">
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="favourites">Favourites first</option>
+                    </select>
+                </div>
+
                 <div class="trail-controls">
                     <button id="current-page-button" class="page-filter-button">
                         Show this page
@@ -128,6 +155,10 @@
 
                     <button id="favourites-button" class="favourites-button">
                         Show favourites
+                    </button>
+
+                    <button id="timeline-button" class="timeline-button">
+                        Timeline view
                     </button>
                 </div>
 
