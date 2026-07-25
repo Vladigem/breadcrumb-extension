@@ -33,6 +33,12 @@ const totalFavourites = document.querySelector("#total-favourites");
 const sortSelect = document.querySelector("#sort-select");
 const timelineButton = document.querySelector("#timeline-button");
 const sortControl = document.querySelector("#sort-control");
+const collectionSelect = document.querySelector("#collection-select");
+const editCollectionSelect = document.querySelector("#edit-collection-select");
+const collectionFilter = document.querySelector("#collection-filter");
+const collectionNameInput = document.querySelector("#collection-name-input");
+const createCollectionButton = document.querySelector("#create-collection-button");
+const collectionManager = document.querySelector("#collection-manager");
 
 let editingCaptureId = null;
 let currentPageFilterUrl = null;
@@ -87,6 +93,10 @@ sortSelect.addEventListener("change", renderCaptures);
 
 timelineButton.addEventListener("click", toggleTimelineMode);
 
+collectionFilter.addEventListener("change", renderCaptures);
+
+createCollectionButton.addEventListener("click", createCollection);
+
 saveButton.addEventListener("click", async function () {
     const tabs = await chrome.tabs.query({
         active: true,
@@ -121,6 +131,7 @@ saveButton.addEventListener("click", async function () {
         const capture = {
             id: crypto.randomUUID(),
             favourite: false,
+            collectionId: collectionSelect.value || null,
             text: selectedText,
             note: noteInput.value.trim(),
             tags: getTags(tagsInput.value),
@@ -379,7 +390,7 @@ async function toggleTimelineMode() {
 }
 
 
-function renderTimeline(captures) {
+function renderTimeline(captures, collections) {
     const timelineCaptures = [...captures].sort(function (
         firstCapture,
         secondCapture
@@ -418,7 +429,7 @@ function renderTimeline(captures) {
             const item = document.createElement("div");
             item.className = "timeline-item";
 
-            item.append(createCaptureCard(capture));
+            item.append(createCaptureCard(capture, collections));
             items.append(item);
         }
 
@@ -441,12 +452,192 @@ function formatTimelineDate(dateText) {
 }
 
 
+function renderCollectionOptions(select, collections, emptyLabel) {
+    const selectedValue = select.value;
+
+    select.innerHTML = "";
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = emptyLabel;
+
+    select.append(emptyOption);
+
+    for (const collection of collections) {
+        const option = document.createElement("option");
+        option.value = collection.id;
+        option.textContent = collection.name;
+
+        select.append(option);
+    }
+
+    const collectionStillExists = collections.some(function (collection) {
+        return collection.id === selectedValue;
+    });
+
+    if (collectionStillExists) {
+        select.value = selectedValue;
+    } else {
+        select.value = "";
+    }
+}
+
+
+function renderCollectionControls(collections) {
+    renderCollectionOptions(
+        collectionSelect,
+        collections,
+        "No collection"
+    );
+
+    renderCollectionOptions(
+        editCollectionSelect,
+        collections,
+        "No collection"
+    );
+
+    renderCollectionOptions(
+        collectionFilter,
+        collections,
+        "All collections"
+    );
+}
+
+
+function renderCollectionManager(collections) {
+    collectionManager.innerHTML = "";
+
+    if (collections.length === 0) {
+        const message = document.createElement("p");
+        message.className = "settings-help";
+        message.textContent = "No collections yet.";
+
+        collectionManager.append(message);
+        return;
+    }
+
+    for (const collection of collections) {
+        const row = document.createElement("div");
+        row.className = "collection-row";
+
+        const name = document.createElement("p");
+        name.textContent = collection.name;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "collection-delete-button";
+        deleteButton.textContent = "Remove";
+
+        deleteButton.addEventListener("click", async function () {
+            await deleteCollection(collection.id);
+        });
+
+        row.append(name);
+        row.append(deleteButton);
+
+        collectionManager.append(row);
+    }
+}
+
+
+async function createCollection() {
+    const name = collectionNameInput.value.trim();
+
+    if (name === "") {
+        statusMessage.textContent = "Give the collection a name first.";
+        return;
+    }
+
+    const storedData = await chrome.storage.local.get({
+        collections: []
+    });
+
+    const nameAlreadyExists = storedData.collections.some(function (collection) {
+        return collection.name.toLowerCase() === name.toLowerCase();
+    });
+
+    if (nameAlreadyExists) {
+        statusMessage.textContent = "That collection already exists.";
+        return;
+    }
+
+    const collection = {
+        id: crypto.randomUUID(),
+        name: name
+    };
+
+    await chrome.storage.local.set({
+        collections: [...storedData.collections, collection]
+    });
+
+    collectionNameInput.value = "";
+
+    statusMessage.textContent = `Created ${collection.name}.`;
+
+    await renderCaptures();
+
+    collectionSelect.value = collection.id;
+}
+
+
+async function deleteCollection(collectionId) {
+    const storedData = await chrome.storage.local.get({
+        captures: [],
+        collections: []
+    });
+
+    const collection = storedData.collections.find(function (item) {
+        return item.id === collectionId;
+    });
+
+    const confirmed = window.confirm(
+        `Remove "${collection.name}"? Its breadcrumbs will stay saved without a collection.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const updatedCollections = storedData.collections.filter(function (item) {
+        return item.id !== collectionId;
+    });
+
+    const updatedCaptures = storedData.captures.map(function (capture) {
+        if (capture.collectionId === collectionId) {
+            return {
+                ...capture,
+                collectionId: null
+            };
+        }
+
+        return capture;
+    });
+
+    await chrome.storage.local.set({
+        collections: updatedCollections,
+        captures: updatedCaptures
+    });
+
+    if (collectionFilter.value === collectionId) {
+        collectionFilter.value = "";
+    }
+
+    statusMessage.textContent = `Removed ${collection.name}.`;
+
+    await renderCaptures();
+}
+
+
 async function renderCaptures() {
     const storedData = await chrome.storage.local.get({
-        captures: []
+        captures: [],
+        collections: []
     });
 
     const captures = storedData.captures;
+    const collections = storedData.collections;
+
+    renderCollectionControls(collections);
+    renderCollectionManager(collections);
     renderTagBrowser(captures);
     renderTrailSummary(captures);
     const searchTerm = searchInput.value.trim().toLowerCase();
@@ -478,7 +669,15 @@ async function renderCaptures() {
         return capture.favourite === true;
     });
 
-    const visibleCaptures = favouriteCaptures.filter(function (capture) {
+    const collectionFilteredCaptures = favouriteCaptures.filter(function (capture) {
+        if (collectionFilter.value === "") {
+            return true;
+        }
+
+        return capture.collectionId === collectionFilter.value;
+    });
+
+    const visibleCaptures = collectionFilteredCaptures.filter(function (capture) {
         if (currentPageFilterUrl === null) {
             return true;
         }
@@ -510,6 +709,9 @@ async function renderCaptures() {
         } else if (currentPageFilterUrl !== null) {
             emptyMessage.textContent =
                 "No breadcrumbs have been saved from this page yet.";
+        } else if (collectionFilter.value !== "") {
+            emptyMessage.textContent =
+                "No breadcrumbs in this collection match your current filters.";
         } else if (showFavouritesOnly) {
             emptyMessage.textContent =
                 "No favourite breadcrumbs match your current filters."
@@ -524,17 +726,17 @@ async function renderCaptures() {
     emptyMessage.hidden = true;
 
     if (timelineMode) {
-        renderTimeline(sortedCaptures);
+        renderTimeline(sortedCaptures, collections);
     } else {
         for (const capture of sortedCaptures) {
-            const card = createCaptureCard(capture);
+            const card = createCaptureCard(capture, collections);
             captureList.append(card);
         }
     }
 }
 
 
-function createCaptureCard(capture) {
+function createCaptureCard(capture, collections) {
     const card = document.createElement("article");
     card.className = "capture-card";
 
@@ -544,6 +746,14 @@ function createCaptureCard(capture) {
     const note = document.createElement("p");
     note.className = "capture-note";
     note.textContent = capture.note || "";
+
+    const collection = collections.find(function (item) {
+        return item.id === capture.collectionId;
+    });
+
+    const collectionBadge = document.createElement("p");
+    collectionBadge.className = "collection-badge";
+    collectionBadge.textContent = collection ? collection.name : "";
 
     const tags = document.createElement("div");
     tags.className = "capture-tags";
@@ -628,6 +838,10 @@ function createCaptureCard(capture) {
 
     card.append(quote);
 
+    if (collection) {
+        card.append(collectionBadge);
+    }
+
     if (capture.note) {
         card.append(note);
     }
@@ -665,6 +879,7 @@ function startEditing(capture) {
     editingCaptureId = capture.id;
 
     editNoteInput.value = capture.note || "";
+    editCollectionSelect.value = capture.collectionId || "";
     editTagsInput.value = (capture.tags || []).join(", ");
     updateEditNoteCount();
 
@@ -677,6 +892,7 @@ function closeEditPanel() {
     editPanel.hidden = true;
     editNoteInput.value = "";
     editTagsInput.value = "";
+    editCollectionSelect.value = "";
     updateEditNoteCount();
 }
 
@@ -695,6 +911,7 @@ async function saveEditedNote() {
                 ...capture,
                 note: editNoteInput.value.trim(),
                 tags: getTags(editTagsInput.value),
+                collectionId: editCollectionSelect.value || null,
                 updatedAt: new Date().toISOString()
             };
         }
@@ -715,7 +932,8 @@ async function saveEditedNote() {
 
 async function exportCaptures() {
     const storedData = await chrome.storage.local.get({
-        captures: []
+        captures: [],
+        collections: []
     });
 
     if (storedData.captures.length === 0) {
@@ -727,6 +945,7 @@ async function exportCaptures() {
         app: "Breadcrumb",
         version: 1,
         exportedAt: new Date().toISOString(),
+        collections: storedData.collections,
         captures: storedData.captures
     };
 
@@ -765,8 +984,13 @@ async function importCaptures(event) {
 
         const validCaptures = backup.captures.filter(isValidCapture);
 
+        const validCollections = Array.isArray(backup.collections)
+            ? backup.collections.filter(isValidCollection)
+            : [];
+
         const storedData = await chrome.storage.local.get({
-            captures: []
+            captures: [],
+            collections: []
         });
 
         const existingIds = new Set(
@@ -774,6 +998,16 @@ async function importCaptures(event) {
                 return capture.id;
             })
         );
+
+        const existingCollectionIds = new Set(
+            storedData.collections.map(function (collection) {
+                return collection.id;
+            })
+        );
+
+        const newCollections = validCollections.filter(function (collection) {
+            return !existingCollectionIds.has(collection.id);
+        });
 
         const newCaptures = validCaptures.filter(function (capture) {
             return !existingIds.has(capture.id);
@@ -789,7 +1023,8 @@ async function importCaptures(event) {
         });
 
         await chrome.storage.local.set({
-            captures: combinedCaptures
+            captures: combinedCaptures,
+            collections: [...storedData.collections, ...newCollections]
         });
 
         statusMessage.textContent =
@@ -803,6 +1038,14 @@ async function importCaptures(event) {
     } finally {
         importInput.value = "";
     }
+}
+
+
+function isValidCollection(collection) {
+    return (
+        typeof collection.id === "string" &&
+        typeof collection.name === "string"
+    );
 }
 
 

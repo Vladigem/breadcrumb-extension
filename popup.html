@@ -34,6 +34,14 @@
 
             <p class="input-help">Separate tags with commas.</p>
 
+            <label for="collection-select">Collection</label>
+
+            <select id="collection-select">
+                <option value="">No collection</option>
+            </select>
+
+            <p class="input-help">Group related breadcrumbs together.</p>
+
             <button id="save-button">Save selected text</button>
             <p id="status-message">Select text on a webpage, then open Breadcrumb.</p>
 
@@ -77,6 +85,29 @@
                         hidden
                     >
                 </div>
+
+                <div class="collection-section">
+                    <h3>Collections</h3>
+
+                    <p class="settings-help">
+                        Create learning paths for related breadcrumbs.
+                    </p>
+
+                    <div class="collection-create">
+                        <input
+                            id="collection-name-input"
+                            type="text"
+                            maxlength="30"
+                            placeholder="For example: Python learning"
+                        >
+
+                        <button id="create-collection-button" class="secondary-button">
+                            Create
+                        </button>
+                    </div>
+
+                    <div id="collection-manager" class="collection-manager"></div>
+                </div>
             </section>
 
             <section id="edit-panel" class="edit-panel" hidden>
@@ -99,6 +130,12 @@
                 >
 
                 <p class="input-help">Separate tags with commas.</p>
+
+                <label for="edit-collection-select">Collection</label>
+
+                <select id="edit-collection-select">
+                    <option value="">No collection</option>
+                </select>
 
                 <div class="edit-actions">
                     <button id="cancel-edit-button" class="secondary-button">
@@ -141,6 +178,14 @@
                         <option value="newest">Newest first</option>
                         <option value="oldest">Oldest first</option>
                         <option value="favourites">Favourites first</option>
+                    </select>
+                </div>
+
+                <div class="collection-filter">
+                    <label for="collection-filter">Collection</label>
+
+                    <select id="collection-filter">
+                        <option value="">All collections</option>
                     </select>
                 </div>
 

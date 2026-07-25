@@ -173,6 +173,7 @@ textarea:focus {
     display: grid;
     gap: 12px;
     margin: 14px 0;
+    padding: 0 2px;
 }
 
 .capture-card {
@@ -262,7 +263,14 @@ textarea:focus {
 
 .capture-actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 7px;
+}
+
+.source-link {
+    flex: 1 1 80px;
+    min-width: 0;
 }
 
 #tags-input,
@@ -586,4 +594,106 @@ textarea:focus {
     position: absolute;
     top: 18px;
     width: 10px;
+}
+
+#collection-select,
+#edit-collection-select,
+#collection-filter {
+    background: white;
+    border: 1px solid #b5beb1;
+    border-radius: 8px;
+    box-sizing: border-box;
+    color: #24342b;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    padding: 10px;
+    width: 100%;
+}
+
+.collection-section {
+    border-top: 1px solid #cbd7c7;
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+.collection-section h3{
+    font-size: 14px;
+    margin: 0;
+}
+
+.collection-create {
+    display: flex;
+    gap: 8px;
+}
+
+#collection-name-input {
+    border: 1px solid #b5beb1;
+    border-radius: 8px;
+    flex: 1;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    min-width: 0;
+    padding: 9px;
+}
+
+.collection-create button {
+    width: auto;
+}
+
+.collection-manager {
+    display: grid;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.collection-row {
+    align-items: center;
+    background: #f7f2e8;
+    border: 1px solid #d8d1c4;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+}
+
+.collection-row p {
+    font-size: 13px;
+    margin: 0;
+}
+
+.collection-delete-button {
+    background: transparent;
+    border: none;
+    color: #8a3f32;
+    font-size: 12px;
+    padding: 4px;
+    width: auto;
+}
+
+.collection-filter {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.collection-filter label {
+    font-size: 12px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.collection-filter select {
+    flex: 1;
+    min-width: 0;
+}
+
+.collection-badge {
+    background: #dbe4f3;
+    border-radius: 999px;
+    color: #31527e;
+    display: inline-block;
+    font-size: 11px;
+    margin: 0 0 10px;
+    padding: 4px 8px;
 }
