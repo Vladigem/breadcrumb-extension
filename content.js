@@ -141,9 +141,6 @@ function openQuickCapturePanel(selectedText, left, top) {
     const panel = document.createElement("aside");
     panel.id = quickCapturePanelId;
 
-    panel.style.top = `${Math.max(12, top)}px`;
-    panel.style.left = `${Math.max(12, left)}px`;
-
     const heading = document.createElement("p");
     heading.className = "breadcrumb-quick-heading";
     heading.textContent = "SAVE BREADCRUMB";
@@ -191,6 +188,27 @@ function openQuickCapturePanel(selectedText, left, top) {
     panel.append(actions);
 
     document.body.append(panel);
+
+    const panelRectangle = panel.getBoundingClientRect();
+
+    const safeTop = Math.max(
+        12,
+        Math.min(
+            top,
+            window.innerHeight - panelRectangle.height - 12
+        )
+    );
+
+    const safeLeft = Math.max(
+        12,
+        Math.min(
+            left,
+            window.innerWidth - panelRectangle.width - 12
+        )
+    );
+
+    panel.style.top = `${safeTop}px`;
+    panel.style.left = `${safeLeft}px`;
 
     noteInput.focus();
 }

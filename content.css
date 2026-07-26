@@ -100,11 +100,13 @@
     box-shadow: 0 12px 28px rgba(36, 52, 43, 0.24);
     color: #24342b;
     font-family: Arial, sans-serif;
+    max-height: calc(100vh - 24px);
     max-width: 290px;
     padding: 15px;
     position: fixed;
     width: calc(100vw - 48px);
     z-index: 2147483647;
+    overflow-y: auto;
 }
 
 .breadcrumb-quick-heading {
