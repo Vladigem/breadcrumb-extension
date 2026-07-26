@@ -774,6 +774,7 @@ function createCaptureCard(capture, collections) {
     source.href = capture.url;
     source.target = "_blank";
     source.textContent = capture.title;
+    source.className = "source-link";
 
     const favouriteButton = document.createElement("button");
     favouriteButton.className = "favourite-button";
