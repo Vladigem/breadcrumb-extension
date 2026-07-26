@@ -47,22 +47,59 @@ let showFavouritesOnly = false;
 let timelineMode = false;
 
 
-noteInput.addEventListener("input", updateNoteCount);
+async function loadStoredData() {
+    return chrome.storage.local.get({
+        captures: [],
+        collections: [],
+        remindersEnabled: true
+    });
+}
 
-searchInput.addEventListener("input", renderCaptures);
 
-editNoteInput.addEventListener("input", updateEditNoteCount);
+async function updateStoredData(changes) {
+    await chrome.storage.local.set(changes);
+}
 
-cancelEditButton.addEventListener("click", closeEditPanel);
 
-saveEditButton.addEventListener("click", saveEditedNote);
+function setupEventListeners() {
+    noteInput.addEventListener("input", updateNoteCount);
+    searchInput.addEventListener("input", renderCaptures);
+    editNoteInput.addEventListener("input", updateEditNoteCount);
 
-settingsButton.addEventListener("click", function () {
+    cancelEditButton.addEventListener("click", closeEditPanel);
+    saveEditButton.addEventListener("click", saveEditedNote);
+
+    settingsButton.addEventListener("click", toggleSettingsPanel);
+    remindersEnabled.addEventListener("change", updateReminderSetting);
+
+    currentPageButton.addEventListener("click", showCurrentPageCaptures);
+    clearPageFilterButton.addEventListener("click", showAllCaptures);
+
+    exportButton.addEventListener("click", exportCaptures);
+    importButton.addEventListener("click", openImportPicker);
+    importInput.addEventListener("change", importCaptures);
+
+    clearTagButton.addEventListener("click", clearTagFilter);
+    favouritesButton.addEventListener("click", toggleFavouriteFilter);
+
+    sortSelect.addEventListener("change", renderCaptures);
+    timelineButton.addEventListener("click", toggleTimelineMode);
+    collectionFilter.addEventListener("change", renderCaptures);
+
+    createCollectionButton.addEventListener("click", createCollection);
+
+    saveButton.addEventListener("click", saveCapture);
+    clearButton.addEventListener("click", clearAllCaptures);
+}
+
+
+function toggleSettingsPanel() {
     settingsPanel.hidden = !settingsPanel.hidden;
-});
+}
 
-remindersEnabled.addEventListener("change", async function () {
-    await chrome.storage.local.set({
+
+async function updateReminderSetting() {
+    await updateStoredData({
         remindersEnabled: remindersEnabled.checked
     });
 
@@ -71,43 +108,25 @@ remindersEnabled.addEventListener("change", async function () {
     } else {
         statusMessage.textContent = "Revisit reminders turned off.";
     }
-});
+}
 
-currentPageButton.addEventListener("click", showCurrentPageCaptures);
 
-clearPageFilterButton.addEventListener("click", showAllCaptures);
-
-exportButton.addEventListener("click", exportCaptures);
-
-importButton.addEventListener("click", function () {
+function openImportPicker() {
     importInput.click();
-});
+}
 
-importInput.addEventListener("change", importCaptures);
 
-clearTagButton.addEventListener("click", clearTagFilter);
-
-favouritesButton.addEventListener("click", toggleFavouriteFilter);
-
-sortSelect.addEventListener("change", renderCaptures);
-
-timelineButton.addEventListener("click", toggleTimelineMode);
-
-collectionFilter.addEventListener("change", renderCaptures);
-
-createCollectionButton.addEventListener("click", createCollection);
-
-saveButton.addEventListener("click", async function () {
+async function saveCapture() {
     const tabs = await chrome.tabs.query({
         active: true,
         currentWindow: true
     });
 
-    const currentTab = tabs [0];
+    const currentTab = tabs[0];
 
     const isWebPage =
-    currentTab.url.startsWith("http://") ||
-    currentTab.url.startsWith("https://");
+        currentTab.url.startsWith("http://") ||
+        currentTab.url.startsWith("https://");
 
     if (!isWebPage) {
         statusMessage.textContent =
@@ -140,15 +159,12 @@ saveButton.addEventListener("click", async function () {
             savedAt: new Date().toISOString()
         };
 
-        const storedData = await chrome.storage.local.get({
-            captures: []
-        });
+        const storedData = await loadStoredData();
 
         const captures = storedData.captures;
-
         captures.unshift(capture);
 
-        await chrome.storage.local.set({
+        await updateStoredData({
             captures: captures
         });
 
@@ -162,15 +178,15 @@ saveButton.addEventListener("click", async function () {
         console.error(error);
         statusMessage.textContent = "Breadcrumb could not read this page.";
     }
-});
+}
 
 
-clearButton.addEventListener("click", async function () {
+async function clearAllCaptures() {
     await chrome.storage.local.remove("captures");
 
     statusMessage.textContent = "Cleared saved breadcrumbs.";
     await renderCaptures();
-});
+}
 
 
 async function showCurrentPageCaptures() {
@@ -199,7 +215,7 @@ async function showCurrentPageCaptures() {
     pageFilterMessage.hidden = false;
     pageFilterMessage.textContent =
         "Showing only breadcrumbs saved from this page.";
-    
+
     await renderCaptures();
 }
 
@@ -221,14 +237,14 @@ async function filterByTag(tag) {
 
     searchInput.value = "";
     clearTagButton.hidden = false;
-    
+
     await renderCaptures();
 }
 
 
 async function clearTagFilter() {
     selectedTag = null;
-    
+
     clearTagButton.hidden = true;
 
     await renderCaptures();
@@ -295,9 +311,7 @@ async function toggleFavouriteFilter() {
 
 
 async function toggleFavourite(captureId) {
-    const storedData = await chrome.storage.local.get({
-        captures: []
-    });
+    const storedData = await loadStoredData();
 
     const captureToUpdate = storedData.captures.find(function (capture) {
         return capture.id === captureId;
@@ -314,7 +328,7 @@ async function toggleFavourite(captureId) {
         return capture;
     });
 
-    await chrome.storage.local.set({
+    await updateStoredData({
         captures: updatedCaptures
     });
 
@@ -547,9 +561,7 @@ async function createCollection() {
         return;
     }
 
-    const storedData = await chrome.storage.local.get({
-        collections: []
-    });
+    const storedData = await loadStoredData();
 
     const nameAlreadyExists = storedData.collections.some(function (collection) {
         return collection.name.toLowerCase() === name.toLowerCase();
@@ -565,7 +577,7 @@ async function createCollection() {
         name: name
     };
 
-    await chrome.storage.local.set({
+    await updateStoredData({
         collections: [...storedData.collections, collection]
     });
 
@@ -580,10 +592,7 @@ async function createCollection() {
 
 
 async function deleteCollection(collectionId) {
-    const storedData = await chrome.storage.local.get({
-        captures: [],
-        collections: []
-    });
+    const storedData = await loadStoredData();
 
     const collection = storedData.collections.find(function (item) {
         return item.id === collectionId;
@@ -612,7 +621,7 @@ async function deleteCollection(collectionId) {
         return capture;
     });
 
-    await chrome.storage.local.set({
+    await updateStoredData({
         collections: updatedCollections,
         captures: updatedCaptures
     });
@@ -627,11 +636,46 @@ async function deleteCollection(collectionId) {
 }
 
 
-async function renderCaptures() {
-    const storedData = await chrome.storage.local.get({
-        captures: [],
-        collections: []
+function filterCaptures(captures, searchTerm) {
+    return captures.filter(function (capture) {
+        const searchableText = `
+            ${capture.text}
+            ${capture.note || ""}
+            ${capture.title}
+            ${(capture.tags || []).join(" ")}
+        `.toLowerCase();
+
+        const matchesSearch = searchableText.includes(searchTerm);
+
+        const matchesTag =
+            selectedTag === null ||
+            (capture.tags || []).includes(selectedTag);
+
+        const matchesFavourite =
+            !showFavouritesOnly ||
+            capture.favourite === true;
+
+        const matchesCollection =
+            collectionFilter.value === "" ||
+            capture.collectionId === collectionFilter.value;
+
+        const matchesPage =
+            currentPageFilterUrl === null ||
+            getPageUrl(capture.url) === currentPageFilterUrl;
+
+        return (
+            matchesSearch &&
+            matchesTag &&
+            matchesFavourite &&
+            matchesCollection &&
+            matchesPage
+        );
     });
+}
+
+
+async function renderCaptures() {
+    const storedData = await loadStoredData();
 
     const captures = storedData.captures;
     const collections = storedData.collections;
@@ -642,48 +686,7 @@ async function renderCaptures() {
     renderTrailSummary(captures);
     const searchTerm = searchInput.value.trim().toLowerCase();
 
-    const matchingCaptures = captures.filter(function (capture) {
-        const searchableText = `
-            ${capture.text}
-            ${capture.note || ""}
-            ${capture.title}
-            ${(capture.tags || []).join(" ")}
-        `.toLowerCase();
-
-        return searchableText.includes(searchTerm);
-    });
-
-    const tagFilteredCaptures = matchingCaptures.filter(function (capture) {
-        if (selectedTag === null) {
-            return true;
-        }
-
-        return (capture.tags || []).includes(selectedTag);
-    });
-
-    const favouriteCaptures = tagFilteredCaptures.filter(function (capture) {
-        if (!showFavouritesOnly) {
-            return true;
-        }
-
-        return capture.favourite === true;
-    });
-
-    const collectionFilteredCaptures = favouriteCaptures.filter(function (capture) {
-        if (collectionFilter.value === "") {
-            return true;
-        }
-
-        return capture.collectionId === collectionFilter.value;
-    });
-
-    const visibleCaptures = collectionFilteredCaptures.filter(function (capture) {
-        if (currentPageFilterUrl === null) {
-            return true;
-        }
-
-        return getPageUrl(capture.url) === currentPageFilterUrl;
-    });
+    const visibleCaptures = filterCaptures(captures, searchTerm);
 
     const sortedCaptures = sortCaptures(visibleCaptures);
 
@@ -859,15 +862,13 @@ function createCaptureCard(capture, collections) {
 
 
 async function deleteCapture(captureId) {
-    const storedData = await chrome.storage.local.get({
-        captures: []
-    });
+    const storedData = await loadStoredData();
 
     const updatedCaptures = storedData.captures.filter(function (capture) {
         return capture.id !== captureId;
     });
 
-    await chrome.storage.local.set({
+    await updateStoredData({
         captures: updatedCaptures
     });
 
@@ -902,9 +903,7 @@ async function saveEditedNote() {
         return;
     }
 
-    const storedData = await chrome.storage.local.get({
-        captures: []
-    });
+    const storedData = await loadStoredData();
 
     const updatedCaptures = storedData.captures.map(function (capture) {
         if (capture.id === editingCaptureId) {
@@ -920,7 +919,7 @@ async function saveEditedNote() {
         return capture;
     });
 
-    await chrome.storage.local.set({
+    await updateStoredData({
         captures: updatedCaptures
     });
 
@@ -932,10 +931,7 @@ async function saveEditedNote() {
 
 
 async function exportCaptures() {
-    const storedData = await chrome.storage.local.get({
-        captures: [],
-        collections: []
-    });
+    const storedData = await loadStoredData();
 
     if (storedData.captures.length === 0) {
         statusMessage.textContent = "Save a breadcrumb before exporting."
@@ -989,10 +985,7 @@ async function importCaptures(event) {
             ? backup.collections.filter(isValidCollection)
             : [];
 
-        const storedData = await chrome.storage.local.get({
-            captures: [],
-            collections: []
-        });
+        const storedData = await loadStoredData();
 
         const existingIds = new Set(
             storedData.captures.map(function (capture) {
@@ -1023,7 +1016,7 @@ async function importCaptures(event) {
             return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
         });
 
-        await chrome.storage.local.set({
+        await updateStoredData({
             captures: combinedCaptures,
             collections: [...storedData.collections, ...newCollections]
         });
@@ -1062,9 +1055,7 @@ function isValidCapture(capture) {
 
 
 async function loadSettings() {
-    const storedData = await chrome.storage.local.get({
-        remindersEnabled: true
-    });
+    const storedData = await loadStoredData();
 
     remindersEnabled.checked = storedData.remindersEnabled;
 }
@@ -1107,6 +1098,7 @@ function getSelectedText() {
 }
 
 
+setupEventListeners();
 updateNoteCount();
 updateEditNoteCount();
 renderCaptures();
