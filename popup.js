@@ -21,6 +21,12 @@ import {
 } from "./capture-renderer.js";
 
 
+import {
+    renderCollectionControls,
+    renderCollectionManager
+} from "./collection-renderer.js";
+
+
 const saveButton = document.querySelector("#save-button");
 const clearButton = document.querySelector("#clear-button");
 const noteInput = document.querySelector("#note-input");
@@ -75,6 +81,13 @@ const captureActions = {
     toggleFavourite: toggleFavourite,
     startEditing: startEditing,
     deleteCapture: deleteCapture
+};
+
+
+const collectionControls = {
+    saveSelect: collectionSelect,
+    editSelect: editCollectionSelect,
+    filterSelect: collectionFilter
 };
 
 
@@ -393,93 +406,6 @@ async function toggleTimelineMode() {
 }
 
 
-function renderCollectionOptions(select, collections, emptyLabel) {
-    const selectedValue = select.value;
-
-    select.innerHTML = "";
-
-    const emptyOption = document.createElement("option");
-    emptyOption.value = "";
-    emptyOption.textContent = emptyLabel;
-
-    select.append(emptyOption);
-
-    for (const collection of collections) {
-        const option = document.createElement("option");
-        option.value = collection.id;
-        option.textContent = collection.name;
-
-        select.append(option);
-    }
-
-    const collectionStillExists = collections.some(function (collection) {
-        return collection.id === selectedValue;
-    });
-
-    if (collectionStillExists) {
-        select.value = selectedValue;
-    } else {
-        select.value = "";
-    }
-}
-
-
-function renderCollectionControls(collections) {
-    renderCollectionOptions(
-        collectionSelect,
-        collections,
-        "No collection"
-    );
-
-    renderCollectionOptions(
-        editCollectionSelect,
-        collections,
-        "No collection"
-    );
-
-    renderCollectionOptions(
-        collectionFilter,
-        collections,
-        "All collections"
-    );
-}
-
-
-function renderCollectionManager(collections) {
-    collectionManager.innerHTML = "";
-
-    if (collections.length === 0) {
-        const message = document.createElement("p");
-        message.className = "settings-help";
-        message.textContent = "No collections yet.";
-
-        collectionManager.append(message);
-        return;
-    }
-
-    for (const collection of collections) {
-        const row = document.createElement("div");
-        row.className = "collection-row";
-
-        const name = document.createElement("p");
-        name.textContent = collection.name;
-
-        const deleteButton = document.createElement("button");
-        deleteButton.className = "collection-delete-button";
-        deleteButton.textContent = "Remove";
-
-        deleteButton.addEventListener("click", async function () {
-            await deleteCollection(collection.id);
-        });
-
-        row.append(name);
-        row.append(deleteButton);
-
-        collectionManager.append(row);
-    }
-}
-
-
 async function createCollection() {
     const name = collectionNameInput.value.trim();
 
@@ -569,8 +495,15 @@ async function renderCaptures() {
     const captures = storedData.captures;
     const collections = storedData.collections;
 
-    renderCollectionControls(collections);
-    renderCollectionManager(collections);
+    renderCollectionControls(
+        collections,
+        collectionControls
+    );
+    renderCollectionManager(
+        collections,
+        collectionManager,
+        deleteCollection
+    );
     renderTagBrowser(captures);
     renderTrailSummary(captures);
     const searchTerm = searchInput.value.trim().toLowerCase();

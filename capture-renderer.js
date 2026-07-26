@@ -146,7 +146,7 @@ function createCaptureCard(
             "Add breadcrumb to favourites"
         );
     }
-    
+
     favouriteButton.addEventListener("click", async function () {
         await captureActions.toggleFavourite(capture.id);
     });
