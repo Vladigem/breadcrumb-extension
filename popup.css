@@ -697,3 +697,31 @@ textarea:focus {
     margin: 0 0 10px;
     padding: 4px 8px;
 }
+
+.save-actions {
+    display: grid;
+    gap: 8px;
+}
+
+.save-actions .secondary-button {
+    margin-top: 0;
+}
+
+.page-capture-card {
+    background: #edf0e3;
+    border: 1px solid #cbd5be;
+}
+
+.page-capture-label {
+    color: #5d7a65;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.2px;
+    margin: 0 0 7px;
+}
+
+.page-capture-title {
+    font-size: 16px;
+    line-height: 1.35;
+    margin: 0 0 12px;
+}

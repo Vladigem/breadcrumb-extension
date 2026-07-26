@@ -69,7 +69,7 @@ function renderCollectionOptions(
     const selectedValue = select.value;
 
     select.innerHTML = "";
-    
+
     const emptyOption = document.createElement("option");
     emptyOption.value = "";
     emptyOption.textContent = emptyLabel;

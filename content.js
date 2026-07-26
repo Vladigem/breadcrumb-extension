@@ -48,7 +48,12 @@ async function showRevisitReminder() {
 
     const quote = document.createElement("blockquote");
     quote.className = "breadcrumb-reminder-quote";
-    quote.textContent = `"${shortenText(latestCapture.text, 170)}"`;
+    if (latestCapture.type === "page") {
+        quote.textContent = latestCapture.title;
+    } else {
+        quote.textContent =
+            `"${shortenText(latestCapture.text, 170)}"`;
+    }
 
     const note = document.createElement("p");
     note.className = "breadcrumb-reminder-note";
@@ -221,6 +226,7 @@ async function saveQuickCapture(text, note) {
 
     const capture = {
         id: crypto.randomUUID(),
+        type: "highlight",
         favourite: false,
         collectionId: null,
         text: text,

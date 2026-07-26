@@ -90,11 +90,30 @@ function createCaptureCard(
     collections,
     captureActions
 ) {
+    const isPageCapture = capture.type === "page";
+
     const card = document.createElement("article");
     card.className = "capture-card";
 
-    const quote = document.createElement("blockquote");
-    quote.textContent = `"${capture.text}"`;
+    if (isPageCapture) {
+        card.classList.add("page-capture-card");
+    }
+
+    const mainContent = document.createElement(
+        isPageCapture ? "h3" : "blockquote"
+    );
+
+    mainContent.className = isPageCapture
+        ? "page-capture-title"
+        : "";
+
+    mainContent.textContent = isPageCapture
+        ? capture.title
+        : `"${capture.text}"`;
+
+    const pageLabel = document.createElement("p");
+    pageLabel.className = "page-capture-label";
+    pageLabel.textContent = "SAVED PAGE";
 
     const note = document.createElement("p");
     note.className = "capture-note";
@@ -126,7 +145,9 @@ function createCaptureCard(
     const source = document.createElement("a");
     source.href = capture.url;
     source.target = "_blank";
-    source.textContent = capture.title;
+    source.textContent = isPageCapture
+        ? "Open saved page"
+        : capture.title;
     source.className = "source-link";
 
     const favouriteButton = document.createElement("button");
@@ -190,7 +211,11 @@ function createCaptureCard(
         date.textContent = `Saved ${savedTime.toLocaleString()}`;
     }
 
-    card.append(quote);
+    if (isPageCapture) {
+        card.append(pageLabel);
+    }
+
+    card.append(mainContent);
 
     if (collection) {
         card.append(collectionBadge);

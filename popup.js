@@ -28,6 +28,9 @@ import {
 
 
 const saveButton = document.querySelector("#save-button");
+const savePageButton = document.querySelector(
+    "#save-page-button"
+);
 const clearButton = document.querySelector("#clear-button");
 const noteInput = document.querySelector("#note-input");
 const noteCount = document.querySelector("#note-count");
@@ -118,7 +121,16 @@ function setupEventListeners() {
 
     createCollectionButton.addEventListener("click", createCollection);
 
-    saveButton.addEventListener("click", saveCapture);
+    saveButton.addEventListener(
+        "click",
+        saveHighlightCapture
+    );
+
+    savePageButton.addEventListener(
+        "click",
+        savePageCapture
+    );
+
     clearButton.addEventListener("click", clearAllCaptures);
 }
 
@@ -146,19 +158,62 @@ function openImportPicker() {
 }
 
 
-async function saveCapture() {
+async function getCurrentTab() {
     const tabs = await chrome.tabs.query({
         active: true,
         currentWindow: true
     });
 
-    const currentTab = tabs[0];
+    return tabs[0];
+}
 
-    const isWebPage =
-        currentTab.url.startsWith("http://") ||
-        currentTab.url.startsWith("https://");
 
-    if (!isWebPage) {
+function isNormalWebPage(tab) {
+    return (
+        tab &&
+        typeof tab.url === "string" &&
+        (
+            tab.url.startsWith("http://") ||
+            tab.url.startsWith("https://")
+        )
+    );
+}
+
+
+function createCaptureDetails(currentTab) {
+    return {
+        id: crypto.randomUUID(),
+        favourite: false,
+        collectionId: collectionSelect.value || null,
+        note: noteInput.value.trim(),
+        tags: getTags(tagsInput.value),
+        title: currentTab.title,
+        url: currentTab.url,
+        savedAt: new Date().toISOString()
+    };
+}
+
+
+async function addCapture(capture) {
+    const storedData = await loadStoredData();
+
+    await updateStoredData({
+        captures: [capture, ...storedData.captures]
+    });
+}
+
+
+function resetCaptureInputs() {
+    noteInput.value = "";
+    tagsInput.value = "";
+    updateNoteCount();
+}
+
+
+async function saveHighlightCapture() {
+    const currentTab = await getCurrentTab();
+
+    if (!isNormalWebPage(currentTab)) {
         statusMessage.textContent =
             "Breadcrumb works on normal webpages, not Chrome pages.";
         return;
@@ -170,43 +225,58 @@ async function saveCapture() {
             func: getSelectedText
         });
 
-        const selectedText = results[0].result.trim()
+        const selectedText = results[0].result.trim();
 
         if (selectedText === "") {
-            statusMessage.textContent = "Select some text on the page first.";
+            statusMessage.textContent =
+                "Select some text on the page first.";
             return;
         }
 
         const capture = {
-            id: crypto.randomUUID(),
-            favourite: false,
-            collectionId: collectionSelect.value || null,
-            text: selectedText,
-            note: noteInput.value.trim(),
-            tags: getTags(tagsInput.value),
-            title: currentTab.title,
-            url: currentTab.url,
-            savedAt: new Date().toISOString()
+            ...createCaptureDetails(currentTab),
+            type: "highlight",
+            text: selectedText
         };
 
-        const storedData = await loadStoredData();
-
-        const captures = storedData.captures;
-        captures.unshift(capture);
-
-        await updateStoredData({
-            captures: captures
-        });
-
-        noteInput.value = "";
-        tagsInput.value = "";
-        updateNoteCount();
+        await addCapture(capture);
+        resetCaptureInputs();
 
         statusMessage.textContent = "Saved your breadcrumb.";
         await renderCaptures();
     } catch (error) {
         console.error(error);
-        statusMessage.textContent = "Breadcrumb could not read this page.";
+        statusMessage.textContent =
+            "Breadcrumb could not read this page.";
+    }
+}
+
+
+async function savePageCapture() {
+    const currentTab = await getCurrentTab();
+
+    if (!isNormalWebPage(currentTab)) {
+        statusMessage.textContent =
+            "Breadcrumb saves normal webpages, not Chrome pages.";
+        return;
+    }
+
+    try {
+        const capture = {
+            ...createCaptureDetails(currentTab),
+            type: "page",
+            text: ""
+        };
+
+        await addCapture(capture);
+        resetCaptureInputs();
+
+        statusMessage.textContent = "Saved this page.";
+        await renderCaptures();
+    } catch (error) {
+        console.error(error);
+        statusMessage.textContent =
+            "Breadcrumb could not save this page.";
     }
 }
 

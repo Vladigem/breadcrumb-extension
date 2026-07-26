@@ -63,6 +63,7 @@ export function filterCaptures(captures, filters) {
             ${capture.text}
             ${capture.note || ""}
             ${capture.title}
+            ${capture.url}
             ${(capture.tags || []).join(" ")}
         `.toLowerCase();
 
