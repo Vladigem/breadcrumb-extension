@@ -71,6 +71,7 @@ const collectionFilter = document.querySelector("#collection-filter");
 const collectionNameInput = document.querySelector("#collection-name-input");
 const createCollectionButton = document.querySelector("#create-collection-button");
 const collectionManager = document.querySelector("#collection-manager");
+const typeFilter = document.querySelector("#type-filter");
 
 let editingCaptureId = null;
 let currentPageFilterUrl = null;
@@ -132,6 +133,8 @@ function setupEventListeners() {
     );
 
     clearButton.addEventListener("click", clearAllCaptures);
+
+    typeFilter.addEventListener("change", renderCaptures);
 }
 
 
@@ -583,7 +586,8 @@ async function renderCaptures() {
         selectedTag: selectedTag,
         showFavouritesOnly: showFavouritesOnly,
         collectionId: collectionFilter.value,
-        currentPageFilterUrl: currentPageFilterUrl
+        currentPageFilterUrl: currentPageFilterUrl,
+        captureType: typeFilter.value
     });
 
     const sortedCaptures = sortCaptures(
@@ -619,6 +623,12 @@ async function renderCaptures() {
         } else if (showFavouritesOnly) {
             emptyMessage.textContent =
                 "No favourite breadcrumbs match your current filters."
+        } else if (typeFilter.value === "page") {
+            emptyMessage.textContent =
+                "No saved pages match your current filters.";
+        } else if (typeFilter.value === "highlight") {
+            emptyMessage.textContent =
+                "No highlights match your current filters.";
         } else {
             emptyMessage.textContent =
                 "No saved breadcrumbs match that search.";

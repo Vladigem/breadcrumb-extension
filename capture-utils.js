@@ -86,12 +86,19 @@ export function filterCaptures(captures, filters) {
             filters.currentPageFilterUrl === null ||
             getPageUrl(capture.url) === filters.currentPageFilterUrl;
 
+        const captureType = capture.type || "highlight";
+
+        const matchesType =
+            filters.captureType === "" ||
+            captureType === filters.captureType;
+
         return (
             matchesSearch &&
             matchesTag &&
             matchesFavourite &&
             matchesCollection &&
-            matchesPage
+            matchesPage &&
+            matchesType
         );
     });
 }

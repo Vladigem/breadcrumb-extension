@@ -598,7 +598,8 @@ textarea:focus {
 
 #collection-select,
 #edit-collection-select,
-#collection-filter {
+#collection-filter,
+#type-filter {
     background: white;
     border: 1px solid #b5beb1;
     border-radius: 8px;
@@ -724,4 +725,18 @@ textarea:focus {
     font-size: 16px;
     line-height: 1.35;
     margin: 0 0 12px;
+}
+
+.type-filter {
+    margin: 12px 0;
+}
+
+.type-filter label {
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.type-filter select {
+    box-sizing: border-box;
+    width: 100%;
 }
