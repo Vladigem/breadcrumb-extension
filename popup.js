@@ -5,6 +5,17 @@ import {
 } from "./storage.js";
 
 
+import {
+    filterCaptures,
+    formatTimelineDate,
+    getPageUrl,
+    getTags,
+    isValidCapture,
+    isValidCollection,
+    sortCaptures
+} from "./capture-utils.js";
+
+
 const saveButton = document.querySelector("#save-button");
 const clearButton = document.querySelector("#clear-button");
 const noteInput = document.querySelector("#note-input");
@@ -352,34 +363,6 @@ function renderTrailSummary(captures) {
 }
 
 
-function sortCaptures(captures) {
-    const sortedCaptures = [...captures];
-
-    if (sortSelect.value === "oldest") {
-        sortedCaptures.sort(function (firstCapture, secondCapture) {
-            return new Date(firstCapture.savedAt) - new Date(secondCapture.savedAt);
-        });
-    } else if (sortSelect.value === "favourites") {
-        sortedCaptures.sort(function (firstCapture, secondCapture) {
-            const favouriteDifference =
-                Number(secondCapture.favourite) - Number(firstCapture.favourite);
-
-            if (favouriteDifference !== 0) {
-                return favouriteDifference;
-            }
-
-            return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
-        });
-    } else {
-        sortedCaptures.sort(function (firstCapture, secondCapture) {
-            return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
-        });
-    }
-
-    return sortedCaptures;
-}
-
-
 async function toggleTimelineMode() {
     timelineMode = !timelineMode;
 
@@ -445,17 +428,6 @@ function renderTimeline(captures, collections) {
 
         captureList.append(group);
     }
-}
-
-
-function formatTimelineDate(dateText) {
-    const date = new Date(dateText);
-
-    return date.toLocaleDateString(undefined, {
-        weekday: "short",
-        month: "short",
-        day: "numeric"
-    });
 }
 
 
@@ -629,44 +601,6 @@ async function deleteCollection(collectionId) {
 }
 
 
-function filterCaptures(captures, searchTerm) {
-    return captures.filter(function (capture) {
-        const searchableText = `
-            ${capture.text}
-            ${capture.note || ""}
-            ${capture.title}
-            ${(capture.tags || []).join(" ")}
-        `.toLowerCase();
-
-        const matchesSearch = searchableText.includes(searchTerm);
-
-        const matchesTag =
-            selectedTag === null ||
-            (capture.tags || []).includes(selectedTag);
-
-        const matchesFavourite =
-            !showFavouritesOnly ||
-            capture.favourite === true;
-
-        const matchesCollection =
-            collectionFilter.value === "" ||
-            capture.collectionId === collectionFilter.value;
-
-        const matchesPage =
-            currentPageFilterUrl === null ||
-            getPageUrl(capture.url) === currentPageFilterUrl;
-
-        return (
-            matchesSearch &&
-            matchesTag &&
-            matchesFavourite &&
-            matchesCollection &&
-            matchesPage
-        );
-    });
-}
-
-
 async function renderCaptures() {
     const storedData = await loadStoredData();
 
@@ -679,9 +613,18 @@ async function renderCaptures() {
     renderTrailSummary(captures);
     const searchTerm = searchInput.value.trim().toLowerCase();
 
-    const visibleCaptures = filterCaptures(captures, searchTerm);
+    const visibleCaptures = filterCaptures(captures, {
+        searchTerm: searchTerm,
+        selectedTag: selectedTag,
+        showFavouritesOnly: showFavouritesOnly,
+        collectionId: collectionFilter.value,
+        currentPageFilterUrl: currentPageFilterUrl
+    });
 
-    const sortedCaptures = sortCaptures(visibleCaptures);
+    const sortedCaptures = sortCaptures(
+        visibleCaptures,
+        sortSelect.value
+    );
 
     if (currentPageFilterUrl !== null) {
         captureCount.textContent = `${sortedCaptures.length} on this page`;
@@ -1028,25 +971,6 @@ async function importCaptures(event) {
 }
 
 
-function isValidCollection(collection) {
-    return (
-        typeof collection.id === "string" &&
-        typeof collection.name === "string"
-    );
-}
-
-
-function isValidCapture(capture) {
-    return (
-        typeof capture.id === "string" &&
-        typeof capture.text === "string" &&
-        typeof capture.title === "string" &&
-        typeof capture.url === "string" &&
-        typeof capture.savedAt === "string"
-    );
-}
-
-
 async function loadSettings() {
     const storedData = await loadStoredData();
 
@@ -1056,28 +980,6 @@ async function loadSettings() {
 
 function updateEditNoteCount() {
     editNoteCount.textContent = `${editNoteInput.value.length} / 240`;
-}
-
-
-function getPageUrl(url) {
-    const pageUrl = new URL(url);
-
-    pageUrl.hash = "";
-
-    return pageUrl.href
-}
-
-
-function getTags(tagText) {
-    const tags = tagText.split(",").map(function (tag) {
-        return tag.trim().toLowerCase();
-    });
-
-    const nonEmptyTags = tags.filter(function (tag) {
-        return tag !== "";
-    });
-
-    return [...new Set(nonEmptyTags)];
 }
 
 
