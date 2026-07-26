@@ -1,3 +1,10 @@
+import {
+    loadStoredData,
+    updateStoredData,
+    removeStoredData
+} from "./storage.js";
+
+
 const saveButton = document.querySelector("#save-button");
 const clearButton = document.querySelector("#clear-button");
 const noteInput = document.querySelector("#note-input");
@@ -45,20 +52,6 @@ let currentPageFilterUrl = null;
 let selectedTag = null;
 let showFavouritesOnly = false;
 let timelineMode = false;
-
-
-async function loadStoredData() {
-    return chrome.storage.local.get({
-        captures: [],
-        collections: [],
-        remindersEnabled: true
-    });
-}
-
-
-async function updateStoredData(changes) {
-    await chrome.storage.local.set(changes);
-}
 
 
 function setupEventListeners() {
@@ -182,7 +175,7 @@ async function saveCapture() {
 
 
 async function clearAllCaptures() {
-    await chrome.storage.local.remove("captures");
+    await removeStoredData("captures");
 
     statusMessage.textContent = "Cleared saved breadcrumbs.";
     await renderCaptures();
