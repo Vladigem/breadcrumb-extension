@@ -27,6 +27,14 @@ import {
 } from "./collection-renderer.js";
 
 
+import {
+    clearScreenshots,
+    deleteScreenshot,
+    loadScreenshot,
+    saveScreenshot
+} from "./image-storage.js";
+
+
 const saveButton = document.querySelector("#save-button");
 const savePageButton = document.querySelector(
     "#save-page-button"
@@ -72,6 +80,9 @@ const collectionNameInput = document.querySelector("#collection-name-input");
 const createCollectionButton = document.querySelector("#create-collection-button");
 const collectionManager = document.querySelector("#collection-manager");
 const typeFilter = document.querySelector("#type-filter");
+const saveScreenshotButton = document.querySelector(
+    "#save-screenshot-button"
+);
 
 let editingCaptureId = null;
 let currentPageFilterUrl = null;
@@ -135,6 +146,10 @@ function setupEventListeners() {
     clearButton.addEventListener("click", clearAllCaptures);
 
     typeFilter.addEventListener("change", renderCaptures);
+    saveScreenshotButton.addEventListener(
+        "click",
+        saveScreenshotCapture
+    );
 }
 
 
@@ -284,8 +299,56 @@ async function savePageCapture() {
 }
 
 
+async function saveScreenshotCapture() {
+    const currentTab = await getCurrentTab();
+
+    if (!isNormalWebPage(currentTab)) {
+        statusMessage.textContent =
+            "Breadcrumb captures normal webpages, not Chrome pages.";
+        return;
+    }
+
+    try {
+        const capture = {
+            ...createCaptureDetails(currentTab),
+            type: "screenshot",
+            text: ""
+        };
+
+        const imageData = await chrome.tabs.captureVisibleTab(
+            currentTab.windowId,
+            {
+                format: "jpeg",
+                quality: 75
+            }
+        );
+
+        await saveScreenshot(capture.id, imageData);
+
+        try {
+            await addCapture(capture);
+        } catch (error) {
+            await deleteScreenshot(capture.id);
+            throw error;
+        }
+
+        resetCaptureInputs();
+
+        statusMessage.textContent =
+            "Saved a screenshot of this page.";
+
+        await renderCaptures();
+    } catch (error) {
+        console.error(error);
+        statusMessage.textContent =
+            "Breadcrumb could not capture this page.";
+    }
+}
+
+
 async function clearAllCaptures() {
     await removeStoredData("captures");
+    await clearScreenshots();
 
     statusMessage.textContent = "Cleared saved breadcrumbs.";
     await renderCaptures();
@@ -629,6 +692,9 @@ async function renderCaptures() {
         } else if (typeFilter.value === "highlight") {
             emptyMessage.textContent =
                 "No highlights match your current filters.";
+        } else if (typeFilter.value === "screenshot") {
+            emptyMessage.textContent =
+                "No screenshots match your current filters.";
         } else {
             emptyMessage.textContent =
                 "No saved breadcrumbs match that search.";
@@ -659,6 +725,16 @@ async function renderCaptures() {
 
 async function deleteCapture(captureId) {
     const storedData = await loadStoredData();
+
+    const captureToDelete = storedData.captures.find(function (
+        capture
+    ) {
+        return capture.id === captureId;
+    });
+
+    if (captureToDelete?.type === "screenshot") {
+        await deleteScreenshot(captureId);
+    }
 
     const updatedCaptures = storedData.captures.filter(function (capture) {
         return capture.id !== captureId;
@@ -734,12 +810,25 @@ async function exportCaptures() {
         return;
     }
 
+    const screenshots = {};
+
+    for (const capture of storedData.captures) {
+        if (capture.type === "screenshot") {
+            const imageData = await loadScreenshot(capture.id);
+
+            if (imageData) {
+                screenshots[capture.id] = imageData;
+            }
+        }
+    }
+
     const backup = {
         app: "Breadcrumb",
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
         collections: storedData.collections,
-        captures: storedData.captures
+        captures: storedData.captures,
+        screenshots: screenshots
     };
 
     const backupText = JSON.stringify(backup, null, 2);
@@ -781,6 +870,27 @@ async function importCaptures(event) {
             ? backup.collections.filter(isValidCollection)
             : [];
 
+        const screenshots =
+            backup.screenshots &&
+            typeof backup.screenshots === "object"
+                ? backup.screenshots
+                : {};
+
+        const importableCaptures = validCaptures.filter(function (
+            capture
+        ) {
+            if (capture.type !== "screenshot") {
+                return true;
+            }
+
+            const imageData = screenshots[capture.id];
+
+            return (
+                typeof imageData === "string" &&
+                imageData.startsWith("data:image/")
+            );
+        });
+
         const storedData = await loadStoredData();
 
         const existingIds = new Set(
@@ -799,7 +909,9 @@ async function importCaptures(event) {
             return !existingCollectionIds.has(collection.id);
         });
 
-        const newCaptures = validCaptures.filter(function (capture) {
+        const newCaptures = importableCaptures.filter(function (
+            capture
+        ) {
             return !existingIds.has(capture.id);
         });
 
@@ -811,6 +923,15 @@ async function importCaptures(event) {
         combinedCaptures.sort(function (firstCapture, secondCapture) {
             return new Date(secondCapture.savedAt) - new Date(firstCapture.savedAt);
         });
+
+        for (const capture of newCaptures) {
+            if (capture.type === "screenshot") {
+                await saveScreenshot(
+                    capture.id,
+                    screenshots[capture.id]
+                );
+            }
+        }
 
         await updateStoredData({
             captures: combinedCaptures,

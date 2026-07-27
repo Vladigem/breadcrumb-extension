@@ -3,6 +3,11 @@ import {
 } from "./capture-utils.js";
 
 
+import {
+    loadScreenshot
+} from "./image-storage.js";
+
+
 export function renderCaptureCards(
     captures,
     collections,
@@ -92,6 +97,9 @@ function createCaptureCard(
 ) {
     const isPageCapture = capture.type === "page";
 
+    const isScreenshotCapture =
+        capture.type === "screenshot";
+
     const card = document.createElement("article");
     card.className = "capture-card";
 
@@ -99,21 +107,58 @@ function createCaptureCard(
         card.classList.add("page-capture-card");
     }
 
-    const mainContent = document.createElement(
-        isPageCapture ? "h3" : "blockquote"
-    );
+    if (isScreenshotCapture) {
+        card.classList.add("screenshot-capture-card");
+    }
 
-    mainContent.className = isPageCapture
-        ? "page-capture-title"
-        : "";
+    let mainContent;
 
-    mainContent.textContent = isPageCapture
-        ? capture.title
-        : `"${capture.text}"`;
+    if (isScreenshotCapture) {
+        mainContent = document.createElement("div");
+        mainContent.className = "screenshot-preview";
+        mainContent.textContent = "Loading screenshot...";
 
-    const pageLabel = document.createElement("p");
-    pageLabel.className = "page-capture-label";
-    pageLabel.textContent = "SAVED PAGE";
+        loadScreenshot(capture.id)
+            .then(function (imageData) {
+                if (!imageData) {
+                    mainContent.textContent =
+                        "Screenshot unavailable.";
+                    return;
+                }
+
+                const image = document.createElement("img");
+                image.src = imageData;
+                image.alt = `Screenshot of ${capture.title}`;
+
+                mainContent.replaceChildren(image);
+            })
+            .catch(function (error) {
+                console.error(error);
+                mainContent.textContent =
+                    "Screenshot unavailable.";
+            });
+    } else {
+        mainContent = document.createElement(
+            isPageCapture ? "h3" : "blockquote"
+        );
+
+        mainContent.className = isPageCapture
+            ? "page-capture-title"
+            : "";
+
+        mainContent.textContent = isPageCapture
+            ? capture.title
+            : `"${capture.text}"`;
+    }
+
+    const typeLabel = document.createElement("p");
+    typeLabel.className = "capture-type-label";
+
+    if (isPageCapture) {
+        typeLabel.textContent = "SAVED PAGE";
+    } else if (isScreenshotCapture) {
+        typeLabel.textContent = "SCREENSHOT";
+    }
 
     const note = document.createElement("p");
     note.className = "capture-note";
@@ -145,10 +190,15 @@ function createCaptureCard(
     const source = document.createElement("a");
     source.href = capture.url;
     source.target = "_blank";
-    source.textContent = isPageCapture
-        ? "Open saved page"
-        : capture.title;
     source.className = "source-link";
+
+    if (isPageCapture) {
+        source.textContent = "Open saved page";
+    } else if (isScreenshotCapture) {
+        source.textContent = "Open screenshot source";
+    } else {
+        source.textContent = capture.title;
+    }
 
     const favouriteButton = document.createElement("button");
     favouriteButton.className = "favourite-button";
@@ -211,8 +261,8 @@ function createCaptureCard(
         date.textContent = `Saved ${savedTime.toLocaleString()}`;
     }
 
-    if (isPageCapture) {
-        card.append(pageLabel);
+    if (isPageCapture || isScreenshotCapture) {
+        card.append(typeLabel);
     }
 
     card.append(mainContent);
