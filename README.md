@@ -1,29 +1,12 @@
 # Breadcrumb
 
-Breadcrumb is a local-first browser extension for saving useful webpage highlights with a short note about why they matter. It will save the selected text, page title, URL, date, and an optional personal note in the browser.
+This service is a local-first browser extension that saves webpage highlights, pages, and screenshots with personal notes, tags, collections, and source links so useful information can be found and revisited later.
 
-## First version
+## Workflow
 
-1. Highlight text on a webpage.
-2. Use the extension popup to save that text as a breadcrumb.
-3. View the latest saved breadcrumb in the popup.
-
-Later versions can add tags, search, return-to-page reminders, and a visual learning trail.
-
-## Learning plan
-
-Build this in small, testable steps:
-
-1. Learn the extension folder and `manifest.json`.
-2. Build a popup with HTML and CSS.
-3. Add JavaScript for a button click.
-4. Read selected webpage text with a content script.
-5. Save and display breadcrumbs with browser storage.
-6. Improve the design and add features.
-
-## Project rules
-
-- Keep the extension local-first: saved data stays in the browser unless a later feature clearly says otherwise.
-- Track only genuine work using Hackatime.
-- Test after each small change by reloading the unpacked extension in Chrome.
-- Do not commit API keys, passwords, or other secrets.
+- **Saving:** Users can save selected text through the popup or the quick-capture panel, save an entire page reference, or capture a screenshot of the visible page.
+- **Organisation:** Breadcrumbs can be given notes, tags, collections, and favourite status. Notes, tags, and collections can be changed after saving.
+- **Finding information:** Saved breadcrumbs can be searched, sorted, and filtered by type, tag, collection, favourite status, or current webpage. They can be viewed as cards or a dated timeline.
+- **Revisiting:** Optional reminders appear when the user returns to a webpage from which breadcrumbs have already been saved.
+- **Using saved information:** Each breadcrumb keeps its original source link and can be copied as formatted text. Screenshots can be opened in a full-size viewer.
+- **Storage and backup:** Breadcrumbs remain in the browser. Users can export their captures, collections, and screenshots to a backup file and import valid, non-duplicate records later.
