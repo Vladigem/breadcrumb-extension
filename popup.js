@@ -94,6 +94,7 @@ let timelineMode = false;
 const captureActions = {
     filterByTag: filterByTag,
     toggleFavourite: toggleFavourite,
+    copyCapture: copyCapture,
     startEditing: startEditing,
     deleteCapture: deleteCapture
 };
@@ -508,6 +509,53 @@ async function toggleFavourite(captureId) {
 }
 
 
+async function copyCapture(capture) {
+    const captureType =
+        capture.type || "highlight";
+
+    const copiedParts = [];
+
+    if (captureType === "highlight") {
+        copiedParts.push(`"${capture.text}"`);
+        copiedParts.push(`Page: ${capture.title}`);
+    } else if (captureType === "page") {
+        copiedParts.push(`Saved page: ${capture.title}`);
+    } else if (captureType === "screenshot") {
+        copiedParts.push(`Screenshot: ${capture.title}`);
+    }
+
+    if (capture.note) {
+        copiedParts.push(`Note: ${capture.note}`);
+    }
+
+    if (capture.tags && capture.tags.length > 0) {
+        const copiedTags = capture.tags.map(function (tag) {
+            return `#${tag}`;
+        });
+
+        copiedParts.push(
+            `Tags: ${copiedTags.join(" ")}`
+        );
+    }
+
+    copiedParts.push(`Source: ${capture.url}`);
+
+    const copiedText = copiedParts.join("\n\n");
+
+    try {
+        await navigator.clipboard.writeText(copiedText);
+
+        statusMessage.textContent =
+            "Copied breadcrumb details.";
+    } catch (error) {
+        console.error(error);
+
+        statusMessage.textContent =
+            "Breadcrumb could not copy this item.";
+    }
+}
+
+
 function renderTrailSummary(captures) {
     const savedPages = new Set(
         captures.map(function (capture) {
@@ -685,7 +733,7 @@ async function renderCaptures() {
                 "No breadcrumbs in this collection match your current filters.";
         } else if (showFavouritesOnly) {
             emptyMessage.textContent =
-                "No favourite breadcrumbs match your current filters."
+                "No favourite breadcrumbs match your current filters.";
         } else if (typeFilter.value === "page") {
             emptyMessage.textContent =
                 "No saved pages match your current filters.";
@@ -806,7 +854,8 @@ async function exportCaptures() {
     const storedData = await loadStoredData();
 
     if (storedData.captures.length === 0) {
-        statusMessage.textContent = "Save a breadcrumb before exporting."
+        statusMessage.textContent =
+            "Save a breadcrumb before exporting.";
         return;
     }
 
@@ -852,11 +901,11 @@ async function exportCaptures() {
 async function importCaptures(event) {
     const selectedFile = event.target.files[0];
 
-    if(!selectedFile) {
+    if (!selectedFile) {
         return;
     }
 
-    try{
+    try {
         const fileText = await selectedFile.text();
         const backup = JSON.parse(fileText);
 
@@ -938,8 +987,13 @@ async function importCaptures(event) {
             collections: [...storedData.collections, ...newCollections]
         });
 
+        const breadcrumbWord =
+            newCaptures.length === 1
+                ? "breadcrumb"
+                : "breadcrumbs";
+
         statusMessage.textContent =
-            `Imported ${newCaptures.length} new breadcrumbs.`;
+            `Imported ${newCaptures.length} new ${breadcrumbWord}.`;
 
         await renderCaptures();
     } catch (error) {

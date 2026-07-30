@@ -247,6 +247,20 @@ function createCaptureCard(
         await captureActions.toggleFavourite(capture.id);
     });
 
+    const copyButton = document.createElement("button");
+
+    copyButton.className = "copy-button";
+    copyButton.textContent = "Copy";
+
+    copyButton.setAttribute(
+        "aria-label",
+        "Copy breadcrumb details"
+    );
+
+    copyButton.addEventListener("click", async function () {
+        await captureActions.copyCapture(capture);
+    });
+
     const editButton = document.createElement("button");
     editButton.className = "edit-button";
     editButton.textContent = "Edit note";
@@ -266,6 +280,7 @@ function createCaptureCard(
     const actions = document.createElement("div");
     actions.className = "capture-actions";
     actions.append(favouriteButton);
+    actions.append(copyButton);
     actions.append(editButton);
     actions.append(deleteButton);
 

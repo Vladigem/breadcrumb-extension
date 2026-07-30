@@ -47,7 +47,7 @@ async function loadViewer() {
         return;
     }
 
-    try{
+    try {
         const imageData =
             await loadScreenshot(captureId);
 

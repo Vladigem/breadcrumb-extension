@@ -197,8 +197,10 @@ textarea:focus {
 }
 
 .capture-footer {
-    align-items: center;
+    align-items: flex-start;
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     justify-content: space-between;
 }
 
@@ -266,15 +268,30 @@ textarea:focus {
     background: #dce8da;
 }
 
+.copy-button {
+    background: transparent;
+    border: 1px solid #8eaaa3;
+    color: #315a50;
+    font-size: 12px;
+    padding: 6px 9px;
+    width: auto;
+}
+
+.copy-button:hover {
+    background: #dce9e5;
+}
+
 .capture-actions {
+    align-items: center;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: 7px;
+    justify-content: flex-end;
+    width: 100%;
 }
 
 .source-link {
-    flex: 1 1 80px;
+    flex: 1 1 100%;
     min-width: 0;
 }
 

@@ -118,17 +118,49 @@ export function formatTimelineDate(dateText) {
 export function isValidCollection(collection) {
     return (
         typeof collection.id === "string" &&
-        typeof collection.name === "string"
+        typeof collection.name === "string" &&
+        collection.name.trim() !== ""
     );
 }
 
 
 export function isValidCapture(capture) {
-    return (
+    const hasRequiredFields =
         typeof capture.id === "string" &&
         typeof capture.text === "string" &&
         typeof capture.title === "string" &&
         typeof capture.url === "string" &&
-        typeof capture.savedAt === "string"
-    );
+        typeof capture.savedAt === "string";
+
+    if (!hasRequiredFields) {
+        return false;
+    }
+
+    const captureType =
+        capture.type || "highlight";
+
+    const validCaptureTypes = [
+        "highlight",
+        "page",
+        "screenshot"
+    ];
+
+    if (!validCaptureTypes.includes(captureType)) {
+        return false;
+    }
+
+    if (Number.isNaN(Date.parse(capture.savedAt))) {
+        return false;
+    }
+
+    try {
+        const captureUrl = new URL(capture.url);
+
+        return (
+            captureUrl.protocol === "http:" ||
+            captureUrl.protocol === "https:"
+        );
+    } catch {
+        return false;
+    }
 }
