@@ -769,4 +769,10 @@ textarea:focus {
     max-height: 180px;
     object-fit: cover;
     width: 100%;
+    cursor: zoom-in;
+}
+
+.screenshot-preview img:focus-visible {
+    outline: 3px solid #d19f2a;
+    outline-offset: -3px;
 }

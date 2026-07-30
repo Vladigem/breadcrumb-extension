@@ -127,10 +127,35 @@ function createCaptureCard(
                 }
 
                 const image = document.createElement("img");
+
                 image.src = imageData;
                 image.alt = `Screenshot of ${capture.title}`;
+                image.title = "Open full-size screenshot";
+                image.tabIndex = 0;
+
+                image.setAttribute("role", "button");
+
+                image.setAttribute(
+                    "aria-label",
+                    `Open full-size screenshot of ${capture.title}`
+                );
+
+                image.addEventListener("click", function () {
+                    openScreenshotViewer(capture);
+                });
+
+                image.addEventListener("keydown", function (event) {
+                    if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                    ) {
+                        event.preventDefault();
+                        openScreenshotViewer(capture);
+                    }
+                });
 
                 mainContent.replaceChildren(image);
+
             })
             .catch(function (error) {
                 console.error(error);
@@ -283,4 +308,20 @@ function createCaptureCard(
     card.append(date);
 
     return card;
+}
+
+
+function openScreenshotViewer(capture) {
+    const parameters = new URLSearchParams({
+        id: capture.id,
+        title: capture.title
+    });
+
+    const viewerUrl = chrome.runtime.getURL(
+        `screenshot-viewer.html?${parameters.toString()}`
+    );
+
+    chrome.tabs.create({
+        url: viewerUrl
+    });
 }
